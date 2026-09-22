@@ -14,6 +14,8 @@ Install:
 6. Check BepInEx/LogOutput.log for manifest status, region coordinates, and sampled prefab instances.
 7. Use `goto ae1`, `goto ae2`, and `goto ae3` in the developer console for field checks.
 
+Restart Subnautica before switching to a different save slot. Version 0.2.0 refuses to mix two per-save manifests in one running game process.
+
 Configuration is created at:
 BepInEx/config/rocks.verburgt.subnautica.abyssalecologies.cfg
 

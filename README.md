@@ -53,6 +53,8 @@ Start with a new test save. At the main menu, `BepInEx\LogOutput.log` should say
 
 Do not use this prototype on the only copy of an important save. The manifest is deterministic and version-checked, but the current vertical slice has not yet terrain-probed every placement or completed its uninstall/reload acceptance gates.
 
+Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.2.0 safely refuses to mix a second manifest into the active session, but it cannot replace the first layout without a restart.
+
 ## Isolated Windows test launcher
 
 `scripts/Launch-Subnautica-Test.ps1` is a guarded launcher for a copied test installation. Place the script beside the test copy's `Subnautica.exe`, keep a `steam_appid.txt` containing `264710` in that same directory, and invoke the script directly or through a shortcut.

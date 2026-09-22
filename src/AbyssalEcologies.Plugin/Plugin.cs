@@ -20,6 +20,7 @@ public sealed class Plugin : BaseUnityPlugin
     private GenerationSettings _settings = null!;
     private AbyssalEcologiesSaveData _saveData = null!;
     private bool _worldRegistered;
+    private string? _activeManifestJson;
 
     private void Awake()
     {
@@ -45,7 +46,18 @@ public sealed class Plugin : BaseUnityPlugin
         task.Status = "Loading the per-save ecology manifest";
         if (_worldRegistered)
         {
-            Logger.LogWarning("Ignoring a duplicate world-ready event; this session's placements are already registered.");
+            var loadedManifestJson = _saveData.Manifest == null ? null : WorldManifestSerializer.Serialize(_saveData.Manifest);
+            if (loadedManifestJson == _activeManifestJson)
+            {
+                Logger.LogInfo("This save's manifest is already registered for the current game session.");
+                task.Status = "Existing ecology manifest remains active";
+            }
+            else
+            {
+                Logger.LogError("A different save manifest was loaded after coordinated spawns were registered. Restart Subnautica before switching save slots so layouts cannot be mixed.");
+                task.Status = "Restart required before switching ecology manifests";
+            }
+
             return;
         }
 
@@ -65,6 +77,7 @@ public sealed class Plugin : BaseUnityPlugin
             }
 
             ContentRegistrar.RegisterWorldSpawns(world);
+            _activeManifestJson = WorldManifestSerializer.Serialize(_saveData.Manifest);
             _worldRegistered = true;
             task.Status = $"Registered {world.Regions.Count} micro-biomes";
 
