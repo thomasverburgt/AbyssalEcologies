@@ -1,4 +1,4 @@
-Abyssal Ecologies 0.1.0
+Abyssal Ecologies 0.2.0
 
 Requirements:
 - Original Subnautica (2018), current non-Legacy desktop branch
@@ -9,9 +9,12 @@ Install:
 1. Back up important saves and use a new test save for this prototype.
 2. Merge the included BepInEx folder into the Subnautica game folder.
 3. Launch the game once.
-4. Check BepInEx/LogOutput.log for "Abyssal Ecologies" region coordinates.
+4. Load a disposable save; no layout is generated at the main menu.
+5. Save once to persist `AbyssalEcologies.json` inside that save slot.
+6. Check BepInEx/LogOutput.log for manifest status, region coordinates, and sampled prefab instances.
+7. Use `goto ae1`, `goto ae2`, and `goto ae3` in the developer console for field checks.
 
 Configuration is created at:
 BepInEx/config/rocks.verburgt.subnautica.abyssalecologies.cfg
 
-Keep the generation seed unchanged after using a save.
+Existing save manifests keep their original seed even if the global configuration later changes.

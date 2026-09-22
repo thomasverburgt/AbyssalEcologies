@@ -8,7 +8,7 @@ $output = Join-Path $repositoryRoot 'src\AbyssalEcologies.Plugin\bin\Release\net
 $artifactRoot = Join-Path $repositoryRoot 'artifacts'
 $stage = Join-Path $artifactRoot 'package'
 $pluginStage = Join-Path $stage 'BepInEx\plugins\AbyssalEcologies'
-$archive = Join-Path $artifactRoot 'AbyssalEcologies-0.1.0.zip'
+$archive = Join-Path $artifactRoot 'AbyssalEcologies-0.2.0.zip'
 
 dotnet restore $solution
 if ($LASTEXITCODE -ne 0) { throw 'Restore failed.' }
@@ -26,4 +26,3 @@ Copy-Item -LiteralPath (Join-Path $repositoryRoot 'packaging\INSTALL.txt') -Dest
 
 Compress-Archive -LiteralPath (Join-Path $stage 'BepInEx'), (Join-Path $stage 'INSTALL.txt') -DestinationPath $archive -Force
 Write-Output "Created $archive"
-

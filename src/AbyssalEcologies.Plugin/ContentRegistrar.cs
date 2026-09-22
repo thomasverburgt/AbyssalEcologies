@@ -5,12 +5,17 @@ using AbyssalEcologies.Core;
 using Nautilus.Assets;
 using Nautilus.Assets.Gadgets;
 using Nautilus.Assets.PrefabTemplates;
+using Nautilus.Handlers;
 using UnityEngine;
 
 namespace AbyssalEcologies.Plugin;
 
 internal static class ContentRegistrar
 {
+    private const int InstanceLogLimitPerContent = 3;
+    private static readonly Dictionary<string, TechType> RegisteredTechTypes = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, int> LoggedInstanceCounts = new(StringComparer.Ordinal);
+
     private static readonly ContentDefinition[] Definitions =
     {
         new("glassfin", "Glassfin", "A translucent filter-feeder drawn to crystalline kelp.", "Peeper", new Color(0.25f, 0.95f, 1f), new Color(0.1f, 0.65f, 1f)),
@@ -22,33 +27,57 @@ internal static class ContentRegistrar
         new("ghost-bloom", "Ghost Bloom", "A pale colony that shelters juvenile lantern skates.", "SmallFan", new Color(0.55f, 0.75f, 1f), new Color(0.2f, 0.45f, 1f)),
 
         new("glass-arch", "Glass Arch", "The mineralized heart of a Glass Kelp Garden.", "CoralShellPlate", new Color(0.2f, 0.9f, 1f), new Color(0.15f, 0.65f, 1f)),
-        new("thermal-spire", "Thermal Spire", "A mineral chimney marking an Ember Trench colony.", "DrillableSulphur", new Color(1f, 0.25f, 0.02f), new Color(1f, 0.08f, 0.01f)),
+        new("thermal-spire", "Thermal Spire", "A mineral chimney marking an Ember Trench colony.", "DrillableKyanite", new Color(1f, 0.25f, 0.02f), new Color(1f, 0.08f, 0.01f)),
         new("nursery-heart", "Nursery Heart", "A vast bloom at the center of a Ghostlight Nursery.", "MembrainTree", new Color(0.45f, 0.65f, 1f), new Color(0.2f, 0.3f, 1f))
     };
 
-    public static void Register(GeneratedWorld world)
+    public static int RegisterDefinitions()
     {
-        var placementsByContent = world.Regions
-            .SelectMany(region => region.Placements)
-            .GroupBy(placement => placement.ContentId)
-            .ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.Ordinal);
-
         foreach (var definition in Definitions)
         {
-            if (!placementsByContent.TryGetValue(definition.Id, out var placements))
-                continue;
-
             if (!Enum.TryParse(definition.SourceTechType, ignoreCase: false, out TechType sourceTechType))
             {
                 Plugin.Log.LogWarning($"Skipping '{definition.DisplayName}': source TechType '{definition.SourceTechType}' is unavailable in this game build.");
                 continue;
             }
 
-            RegisterDefinition(definition, sourceTechType, placements);
+            RegisterDefinition(definition, sourceTechType);
+        }
+
+        return RegisteredTechTypes.Count;
+    }
+
+    public static void RegisterWorldSpawns(GeneratedWorld world)
+    {
+        var placementsByContent = world.Regions
+            .SelectMany(region => region.Placements)
+            .GroupBy(placement => placement.ContentId)
+            .ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.Ordinal);
+
+        foreach (var pair in placementsByContent)
+        {
+            if (!RegisteredTechTypes.TryGetValue(pair.Key, out var techType))
+            {
+                Plugin.Log.LogWarning($"Manifest content '{pair.Key}' has no registered prefab definition; skipping {pair.Value.Length} placements.");
+                continue;
+            }
+
+            var contentId = pair.Key;
+            var spawnInfos = pair.Value.Select(placement => ToSpawnInfo(techType, contentId, placement)).ToList();
+            CoordinatedSpawnsHandler.RegisterCoordinatedSpawns(spawnInfos);
+            Plugin.Log.LogInfo($"Registered {pair.Value.Length} coordinated spawns for '{pair.Key}'.");
+        }
+
+        for (var index = 0; index < world.Regions.Count; index++)
+        {
+            var region = world.Regions[index];
+            var commandName = $"ae{index + 1}";
+            ConsoleCommandsHandler.AddGotoTeleportPosition(commandName, new Vector3(region.Center.X, region.Center.Y, region.Center.Z));
+            Plugin.Log.LogInfo($"Field-check teleport: 'goto {commandName}' -> {region.DisplayName} {region.Center}.");
         }
     }
 
-    private static void RegisterDefinition(ContentDefinition definition, TechType sourceTechType, IReadOnlyCollection<GeneratedPlacement> placements)
+    private static void RegisterDefinition(ContentDefinition definition, TechType sourceTechType)
     {
         var classId = $"AbyssalEcologies_{definition.Id.Replace('-', '_')}";
         var prefab = new CustomPrefab(classId, definition.DisplayName, definition.Description);
@@ -58,8 +87,8 @@ internal static class ContentRegistrar
         };
 
         prefab.SetGameObject(template);
-        prefab.SetSpawns(placements.Select(ToSpawnLocation).ToArray());
         prefab.Register();
+        RegisteredTechTypes.Add(definition.Id, prefab.Info.TechType);
     }
 
     private static SpawnLocation ToSpawnLocation(GeneratedPlacement placement)
@@ -89,6 +118,27 @@ internal static class ContentRegistrar
         }
     }
 
+    private static SpawnInfo ToSpawnInfo(TechType techType, string contentId, GeneratedPlacement placement)
+    {
+        var location = ToSpawnLocation(placement);
+        return new SpawnInfo(
+            techType,
+            location.Position,
+            Quaternion.Euler(location.EulerAngles),
+            location.Scale,
+            gameObject => LogSuccessfulInstance(contentId, gameObject));
+    }
+
+    private static void LogSuccessfulInstance(string contentId, GameObject gameObject)
+    {
+        LoggedInstanceCounts.TryGetValue(contentId, out var count);
+        if (count >= InstanceLogLimitPerContent)
+            return;
+
+        LoggedInstanceCounts[contentId] = count + 1;
+        Plugin.Log.LogInfo($"Instantiated '{contentId}' at {gameObject.transform.position} (sample {count + 1}/{InstanceLogLimitPerContent}).");
+    }
+
     private sealed class ContentDefinition
     {
         public ContentDefinition(string id, string displayName, string description, string sourceTechType, Color tint, Color glow)
@@ -109,4 +159,3 @@ internal static class ContentRegistrar
         public Color Glow { get; }
     }
 }
-

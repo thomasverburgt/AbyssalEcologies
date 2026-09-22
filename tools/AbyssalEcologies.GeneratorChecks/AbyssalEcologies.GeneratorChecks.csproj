@@ -8,5 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/AbyssalEcologies.Core/AbyssalEcologies.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Fixtures/manifest-v1.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
-

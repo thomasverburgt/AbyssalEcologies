@@ -1,6 +1,6 @@
 # Abyssal Ecologies work plan
 
-Last updated: 2026-09-21
+Last updated: 2026-09-22
 
 ## Objective
 
@@ -14,11 +14,14 @@ The repository currently provides:
 - three region archetypes with 41 coordinated placements each;
 - nine Nautilus prefab variants using base-game models as placeholders;
 - configurable seed, region count, radial bounds, depth bounds, and separation;
+- a late-load lifecycle boundary that performs no layout generation at the main menu;
+- a schema-1 per-save manifest containing the seed, regions, placements, and content identifiers;
+- bounded successful-instance logs and three generated field-check teleport destinations;
 - a packaging script that produces an install-ready BepInEx ZIP;
 - a guarded Windows launcher for a copied test installation; and
 - automated checks for determinism, seed variation, placement counts, exclusion from the starting radius, depth bounds, and inter-region separation.
 
-The solution builds with zero warnings and the generator checks pass. The plugin and its dependencies load through BepInEx and reach the main-menu environment. This does not yet prove safe placement or stable gameplay inside a loaded save.
+The solution builds with zero warnings. The checks cover 100 seeds, schema-1 fixture loading, byte-stable manifest round trips, configuration isolation, and rejection of corrupt or future schemas. The first in-game slice confirmed that flora and fauna appear in all three regions. This does not yet prove terrain-safe placement or stable save/quit/reload behavior.
 
 ## Active milestone: terrain-aware save manifests
 
@@ -26,10 +29,10 @@ This is the critical path. Original art and expanded content remain blocked unti
 
 | Priority | Work item | Deliverable | Acceptance evidence |
 | --- | --- | --- | --- |
-| P0 | Save lifecycle hook | Generation starts only after a save slot and world are ready | Logs show one generation event per new save and none at the main menu |
+| Done | Save lifecycle hook | Generation starts only after a save slot and world are ready | Supported Nautilus late-load task; main-menu log reports definitions only |
 | P0 | Terrain probing | Candidate flora and landmarks snap to valid surfaces; swimming fauna remain in water volumes | Seed test report contains no buried, airborne, or above-water placements |
 | P0 | Exclusion volumes | Reject Aurora, lifepods, wrecks, precursor sites, void, map edge, and player structures | Automated rejection tests plus an in-game inspection checklist |
-| P0 | Per-save manifest | Persist seed, schema version, regions, placements, and content identifiers | Reload reproduces byte-equivalent placement data without regenerating |
+| Done* | Per-save manifest | Persist seed, schema version, regions, placements, and content identifiers | Fixture and round-trip checks pass; in-game save/quit/reload evidence remains required |
 | P1 | Developer commands | Print manifest, teleport to region, show bounds, and validate placements | Commands work in a disposable save and produce bounded diagnostic output |
 | P1 | Migration framework | Refuse incompatible manifests and migrate explicitly supported schemas | Fixture tests cover current, previous, corrupt, and future schema versions |
 | P1 | Performance budget | Stream regions without persistent whole-map objects | Profiling captures frame time, allocations, object count, and unload behavior |
@@ -87,4 +90,4 @@ Passing automated checks or reaching the main menu is not sufficient evidence of
 
 ## Immediate next increment
 
-Implement the save lifecycle boundary and versioned manifest model first. The increment should end with fixture-tested manifest serialization plus logs demonstrating that main-menu startup registers content definitions but does not generate a world layout until a save is ready.
+Implement terrain probing and protected-site rejection against the loaded world. Flora and landmarks must snap to valid surfaces, swimming fauna must remain in water with usable clearance, and rejected candidates must be deterministically replaced without changing an existing schema-1 manifest. The increment should also complete the in-game save/quit/reload check for the lifecycle and manifest work above.
