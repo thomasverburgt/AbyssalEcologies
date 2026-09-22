@@ -1,5 +1,7 @@
 # Roadmap
 
+This document describes the product sequence. See [WORK_PLAN.md](WORK_PLAN.md) for current priorities, deliverables, and acceptance evidence.
+
 ## Milestone 0 — deterministic vertical slice (implemented)
 
 Prove a stable seed, separated region placement, prefab registration, world streaming, and a repeatable test harness. Placeholder content is acceptable at this stage.
@@ -47,4 +49,3 @@ Exit gate: every generated location has a reachable entrance, a safe return path
 - Test common world, map, creature, and performance mods.
 - Package exact dependencies and supported game build information.
 - Publish only after clean-install, upgrade, uninstall, and save-recovery tests pass.
-

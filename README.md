@@ -4,6 +4,12 @@ Abyssal Ecologies is an experimental Subnautica 2.0 mod that adds deterministic,
 
 The current `0.1.0` vertical slice is intentionally asset-light: it clones, recolors, and rescales base-game prefabs to prove the world-generation and Nautilus registration pipeline. It does **not** yet modify Subnautica's terrain mesh or biome lookup table, and the placeholder species do not yet have unique models, sounds, eggs, scan entries, or AI. Those are the next content milestones after in-game placement validation.
 
+## Project status
+
+**Prototype — not save-safe for normal play.** The deterministic generator, Nautilus registration layer, packaging workflow, and isolated Windows test launcher are implemented. Automated checks pass, and the plugin reaches the Subnautica main menu. Terrain-aware placement and sustained in-save validation are the active engineering milestone.
+
+Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md](docs/WORK_PLAN.md). The longer product sequence is in [docs/ROADMAP.md](docs/ROADMAP.md).
+
 ## What is implemented
 
 - Three generated region archetypes: Glass Kelp Garden, Ember Trench, and Ghostlight Nursery.
@@ -54,4 +60,4 @@ The launcher starts Steam silently only as the platform service, then launches t
 
 ## Development roadmap
 
-See [docs/ROADMAP.md](docs/ROADMAP.md) for the staged path from this vertical slice to original creatures, richer biome identity, discoveries, and save-compatible releases.
+See the [active work plan](docs/WORK_PLAN.md) for the next implementation tasks and the [roadmap](docs/ROADMAP.md) for the staged path from this vertical slice to original creatures, richer biome identity, discoveries, and save-compatible releases.
