@@ -1,7 +1,7 @@
 Abyssal Ecologies 0.1.0
 
 Requirements:
-- Current desktop Subnautica (2.0 code line)
+- Original Subnautica (2018), current non-Legacy desktop branch
 - Tobey's BepInEx Pack for Subnautica
 - Nautilus
 
@@ -15,4 +15,3 @@ Configuration is created at:
 BepInEx/config/rocks.verburgt.subnautica.abyssalecologies.cfg
 
 Keep the generation seed unchanged after using a save.
-

@@ -4,7 +4,7 @@ Last updated: 2026-09-21
 
 ## Objective
 
-Deliver a save-compatible Subnautica 2.0 mod that creates deterministic, procedurally arranged undersea micro-biomes containing original animals, environmental assemblies, and locations of interest without overwriting vanilla terrain or blocking story progression.
+Deliver a save-compatible mod for the original Subnautica (2018), on its current non-Legacy desktop branch, that creates deterministic, procedurally arranged undersea micro-biomes containing original animals, environmental assemblies, and locations of interest without overwriting vanilla terrain or blocking story progression. This project does not target Subnautica 2 or Subnautica: Below Zero.
 
 ## Verified baseline
 
@@ -88,4 +88,3 @@ Passing automated checks or reaching the main menu is not sufficient evidence of
 ## Immediate next increment
 
 Implement the save lifecycle boundary and versioned manifest model first. The increment should end with fixture-tested manifest serialization plus logs demonstrating that main-menu startup registers content definitions but does not generate a world layout until a save is ready.
-

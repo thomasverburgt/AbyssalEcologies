@@ -1,6 +1,6 @@
 # Abyssal Ecologies
 
-Abyssal Ecologies is an experimental Subnautica 2.0 mod that adds deterministic, procedurally arranged **micro-biomes** to the base game's world. A generation seed selects region positions, species variants, environmental clusters, and a central landmark. The same seed always produces the same layout.
+Abyssal Ecologies is an experimental mod for the original **Subnautica (2018)** that adds deterministic, procedurally arranged **micro-biomes** to the base game's world. It is not for Subnautica 2 or Subnautica: Below Zero. A generation seed selects region positions, species variants, environmental clusters, and a central landmark. The same seed always produces the same layout.
 
 The current `0.1.0` vertical slice is intentionally asset-light: it clones, recolors, and rescales base-game prefabs to prove the world-generation and Nautilus registration pipeline. It does **not** yet modify Subnautica's terrain mesh or biome lookup table, and the placeholder species do not yet have unique models, sounds, eggs, scan entries, or AI. Those are the next content milestones after in-game placement validation.
 
@@ -21,7 +21,7 @@ Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md]
 
 ## Requirements
 
-- Current desktop Subnautica (the 2.0 code line, not the Legacy branch).
+- The original Subnautica (2018), using its current desktop branch rather than the Legacy branch.
 - Tobey's BepInEx Pack for Subnautica.
 - Nautilus.
 - .NET SDK for building. The plugin targets .NET Framework 4.7.2, matching the official Subnautica mod template.
