@@ -1,0 +1,18 @@
+Abyssal Ecologies 0.1.0
+
+Requirements:
+- Current desktop Subnautica (2.0 code line)
+- Tobey's BepInEx Pack for Subnautica
+- Nautilus
+
+Install:
+1. Back up important saves and use a new test save for this prototype.
+2. Merge the included BepInEx folder into the Subnautica game folder.
+3. Launch the game once.
+4. Check BepInEx/LogOutput.log for "Abyssal Ecologies" region coordinates.
+
+Configuration is created at:
+BepInEx/config/rocks.verburgt.subnautica.abyssalecologies.cfg
+
+Keep the generation seed unchanged after using a save.
+

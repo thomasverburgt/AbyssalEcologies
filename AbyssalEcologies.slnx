@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/AbyssalEcologies.Core/AbyssalEcologies.Core.csproj" />
+  <Project Path="src/AbyssalEcologies.Plugin/AbyssalEcologies.Plugin.csproj" />
+  <Project Path="tools/AbyssalEcologies.GeneratorChecks/AbyssalEcologies.GeneratorChecks.csproj" />
+</Solution>
+
