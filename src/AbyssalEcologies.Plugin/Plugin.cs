@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using AbyssalEcologies.Core;
 using BepInEx;
 using BepInEx.Configuration;
@@ -13,7 +14,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string Guid = "rocks.verburgt.subnautica.abyssalecologies";
     public const string Name = "Abyssal Ecologies";
-    public const string Version = "0.2.1";
+    public const string Version = "0.3.0";
 
     internal static ManualLogSource Log { get; private set; } = null!;
 
@@ -31,7 +32,7 @@ public sealed class Plugin : BaseUnityPlugin
             _settings = BindSettings();
             _saveData = SaveDataHandler.RegisterSaveDataCache<AbyssalEcologiesSaveData>();
             var definitionCount = ContentRegistrar.RegisterDefinitions();
-            WaitScreenHandler.RegisterLateLoadTask(Name, OnWorldReady, "Preparing manifest-backed micro-biomes");
+            WaitScreenHandler.RegisterLateAsyncLoadTask(Name, OnWorldReady, "Preparing manifest-backed micro-biomes");
 
             Logger.LogInfo($"{Name} {Version} registered {definitionCount} content definitions. World generation is waiting for a loaded save.");
         }
@@ -41,7 +42,7 @@ public sealed class Plugin : BaseUnityPlugin
         }
     }
 
-    private void OnWorldReady(WaitScreenHandler.WaitScreenTask task)
+    private IEnumerator OnWorldReady(WaitScreenHandler.WaitScreenTask task)
     {
         task.Status = "Loading the per-save ecology manifest";
         if (_worldRegistered)
@@ -58,24 +59,31 @@ public sealed class Plugin : BaseUnityPlugin
                 task.Status = "Restart required before switching ecology manifests";
             }
 
-            return;
+            yield break;
+        }
+
+        GeneratedWorld world;
+        if (_saveData.Manifest == null)
+        {
+            var candidateWorld = new ProceduralWorldGenerator().Generate(_settings);
+            var resolver = new TerrainPlacementResolver(candidateWorld, task);
+            yield return resolver.Run();
+            world = resolver.Result
+                ?? throw new InvalidOperationException("Terrain resolution completed without a generated world.");
+            _saveData.Manifest = WorldManifest.FromGeneratedWorld(world, terrainResolved: true);
+            Logger.LogInfo($"Generated terrain-resolved manifest schema {WorldManifest.CurrentSchemaVersion} for this save using seed {world.Seed}; adjusted {resolver.AdjustedPlacements}, rejected {resolver.RejectedPlacements}.");
+        }
+        else
+        {
+            world = _saveData.Manifest.ToGeneratedWorld();
+            if (_saveData.Manifest.TerrainResolved)
+                Logger.LogInfo($"Loaded terrain-resolved manifest schema {_saveData.Manifest.SchemaVersion} for this save using persisted seed {world.Seed}; current global generation settings were ignored.");
+            else
+                Logger.LogWarning($"Loaded legacy schema {_saveData.Manifest.SchemaVersion} manifest using its validated coordinates unchanged. Start a new disposable save to test terrain-aware generation.");
         }
 
         try
         {
-            GeneratedWorld world;
-            if (_saveData.Manifest == null)
-            {
-                world = new ProceduralWorldGenerator().Generate(_settings);
-                _saveData.Manifest = WorldManifest.FromGeneratedWorld(world);
-                Logger.LogInfo($"Generated manifest schema {WorldManifest.CurrentSchemaVersion} for this save using seed {world.Seed}.");
-            }
-            else
-            {
-                world = _saveData.Manifest.ToGeneratedWorld();
-                Logger.LogInfo($"Loaded manifest schema {_saveData.Manifest.SchemaVersion} for this save using persisted seed {world.Seed}; current global generation settings were ignored.");
-            }
-
             ContentRegistrar.RegisterWorldSpawns(world);
             _activeManifestJson = WorldManifestSerializer.Serialize(_saveData.Manifest);
             _worldRegistered = true;
@@ -88,6 +96,7 @@ public sealed class Plugin : BaseUnityPlugin
         catch (Exception exception)
         {
             Logger.LogError($"{Name} could not activate the loaded save's manifest: {exception}");
+            throw;
         }
     }
 

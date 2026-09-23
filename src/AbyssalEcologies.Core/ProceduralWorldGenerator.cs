@@ -72,6 +72,9 @@ public sealed class ProceduralWorldGenerator
                 -random.Range(settings.MinimumDepth, settings.MaximumDepth),
                 (float)Math.Sin(angle) * radius);
 
+            if (WorldProtectionCatalog.TryFindExclusion(candidate, 140f, out _))
+                continue;
+
             if (result.All(existing => existing.HorizontalDistanceSquared(candidate) >= minimumSeparationSquared))
                 result.Add(candidate);
         }

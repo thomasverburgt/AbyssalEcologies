@@ -1,0 +1,1 @@
+{"schemaVersion":2,"generatorVersion":1,"seed":42,"regions":[{"archetypeId":"fixture-region","displayName":"Fixture Region","center":{"x":1,"y":-202,"z":3},"radius":10,"placements":[{"contentId":"fixture-content","kind":2,"position":{"x":4,"y":-205,"z":6},"eulerAngles":{"x":0,"y":90,"z":0},"scale":1}]}],"terrainResolved":true}

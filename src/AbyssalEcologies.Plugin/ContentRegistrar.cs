@@ -72,7 +72,7 @@ internal static class ContentRegistrar
         {
             var region = world.Regions[index];
             var commandName = $"ae{index + 1}";
-            ConsoleCommandsHandler.AddGotoTeleportPosition(commandName, new Vector3(region.Center.X, region.Center.Y, region.Center.Z));
+            ConsoleCommandsHandler.AddGotoTeleportPosition(commandName, new Vector3(region.Center.X, region.Center.Y + 8f, region.Center.Z));
             Plugin.Log.LogInfo($"Field-check teleport: 'goto {commandName}' -> {region.DisplayName} {region.Center}.");
         }
     }

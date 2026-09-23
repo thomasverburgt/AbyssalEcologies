@@ -11,7 +11,8 @@ namespace AbyssalEcologies.Core;
 [DataContract]
 public sealed class WorldManifest
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
+    public const int OldestSupportedSchemaVersion = 1;
     public const int CurrentGeneratorVersion = 1;
 
     [DataMember(Name = "schemaVersion", Order = 1)]
@@ -26,13 +27,18 @@ public sealed class WorldManifest
     [DataMember(Name = "regions", Order = 4)]
     public List<ManifestRegion> Regions { get; set; } = new();
 
-    public static WorldManifest FromGeneratedWorld(GeneratedWorld world)
+    [DataMember(Name = "terrainResolved", Order = 5, EmitDefaultValue = false)]
+    public bool TerrainResolved { get; set; }
+
+    public static WorldManifest FromGeneratedWorld(GeneratedWorld world, bool terrainResolved)
     {
         if (world == null) throw new ArgumentNullException(nameof(world));
 
         return new WorldManifest
         {
+            SchemaVersion = terrainResolved ? CurrentSchemaVersion : OldestSupportedSchemaVersion,
             Seed = world.Seed,
+            TerrainResolved = terrainResolved,
             Regions = world.Regions.Select(region => new ManifestRegion
             {
                 ArchetypeId = region.ArchetypeId,
@@ -71,8 +77,10 @@ public sealed class WorldManifest
 
     public void Validate()
     {
-        if (SchemaVersion != CurrentSchemaVersion)
-            throw new InvalidDataException($"Unsupported manifest schema {SchemaVersion}; expected {CurrentSchemaVersion}.");
+        if (SchemaVersion < OldestSupportedSchemaVersion || SchemaVersion > CurrentSchemaVersion)
+            throw new InvalidDataException($"Unsupported manifest schema {SchemaVersion}; supported range is {OldestSupportedSchemaVersion}-{CurrentSchemaVersion}.");
+        if (SchemaVersion >= 2 && !TerrainResolved)
+            throw new InvalidDataException("Schema 2 manifests must contain terrain-resolved placements.");
         if (GeneratorVersion != CurrentGeneratorVersion)
             throw new InvalidDataException($"Unsupported generator version {GeneratorVersion}; expected {CurrentGeneratorVersion}.");
         if (Regions == null || Regions.Count == 0)

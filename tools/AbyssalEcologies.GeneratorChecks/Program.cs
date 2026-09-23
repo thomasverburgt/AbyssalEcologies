@@ -9,8 +9,11 @@ Check("same seed is deterministic", SameSeedIsDeterministic);
 Check("different seeds differ", DifferentSeedsDiffer);
 Check("regions obey invariants", RegionsObeyInvariants);
 Check("one hundred seeds obey invariants", OneHundredSeedsObeyInvariants);
+Check("protected areas reject region centers", ProtectedAreasRejectRegionCenters);
+Check("replacement search is deterministic", ReplacementSearchIsDeterministic);
 Check("manifest serialization is byte stable", ManifestSerializationIsByteStable);
 Check("schema 1 fixture loads without drift", SchemaOneFixtureLoadsWithoutDrift);
+Check("schema 2 fixture loads without drift", SchemaTwoFixtureLoadsWithoutDrift);
 Check("manifest preserves saved layout over new settings", ManifestPreservesSavedLayout);
 Check("corrupt manifest is rejected", CorruptManifestIsRejected);
 Check("future manifest schema is rejected", FutureManifestSchemaIsRejected);
@@ -88,6 +91,7 @@ static void AssertWorldInvariants(GeneratedWorld world, GenerationSettings setti
         Require(region.Placements.Count == 41, "unexpected placement count");
         Require(region.Placements.Count(p => p.Kind == PlacementKind.Landmark) == 1, "region must have one landmark");
         Require(region.Placements.All(p => !string.IsNullOrWhiteSpace(p.ContentId)), "placement content id is missing");
+        Require(!WorldProtectionCatalog.TryFindExclusion(region.Center, 140f, out _), "region center entered a protected area");
     }
 
     for (var i = 0; i < world.Regions.Count; i++)
@@ -95,10 +99,33 @@ static void AssertWorldInvariants(GeneratedWorld world, GenerationSettings setti
         Require(world.Regions[i].Center.HorizontalDistanceSquared(world.Regions[j].Center) >= settings.MinimumRegionSeparation * settings.MinimumRegionSeparation, "regions overlap");
 }
 
+static void ProtectedAreasRejectRegionCenters()
+{
+    foreach (var area in WorldProtectionCatalog.All)
+    {
+        Require(WorldProtectionCatalog.TryFindExclusion(new WorldPoint(area.X, -100f, area.Z), 0f, out _), $"protected area '{area.Id}' did not reject its center");
+    }
+
+    Require(!WorldProtectionCatalog.TryFindExclusion(new WorldPoint(0f, -100f, 700f), 0f, out _), "known open-water fixture was rejected");
+}
+
+static void ReplacementSearchIsDeterministic()
+{
+    var origin = new WorldPoint(10f, -200f, 20f);
+    var first = PlacementSearchPattern.Around(origin, 991, 48f).ToArray();
+    var second = PlacementSearchPattern.Around(origin, 991, 48f).ToArray();
+    var changed = PlacementSearchPattern.Around(origin, 992, 48f).ToArray();
+
+    Require(first.Length == 25, "replacement search sample count changed");
+    Require(first.SequenceEqual(second), "replacement search changed for the same stable offset");
+    Require(!first.Skip(1).SequenceEqual(changed.Skip(1)), "replacement search phase ignored its stable offset");
+    Require(first[0].Equals(origin), "replacement search did not try the original position first");
+}
+
 static void ManifestSerializationIsByteStable()
 {
     var world = new ProceduralWorldGenerator().Generate(new GenerationSettings { Seed = 9471 });
-    var first = WorldManifestSerializer.Serialize(WorldManifest.FromGeneratedWorld(world));
+    var first = WorldManifestSerializer.Serialize(WorldManifest.FromGeneratedWorld(world, terrainResolved: true));
     var reloaded = WorldManifestSerializer.Deserialize(first);
     var second = WorldManifestSerializer.Serialize(reloaded);
 
@@ -118,10 +145,22 @@ static void SchemaOneFixtureLoadsWithoutDrift()
     Require(WorldManifestSerializer.Serialize(manifest) == fixture, "schema 1 fixture did not serialize byte-equivalently");
 }
 
+static void SchemaTwoFixtureLoadsWithoutDrift()
+{
+    var fixturePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "manifest-v2.json");
+    var fixture = File.ReadAllText(fixturePath).Trim();
+    var manifest = WorldManifestSerializer.Deserialize(fixture);
+
+    Require(manifest.SchemaVersion == 2, "schema 2 fixture version changed");
+    Require(manifest.TerrainResolved, "schema 2 fixture lost terrain resolution state");
+    Require(manifest.Regions[0].Placements[0].Position.Y == -205f, "schema 2 fixture placement changed");
+    Require(WorldManifestSerializer.Serialize(manifest) == fixture, "schema 2 fixture did not serialize byte-equivalently");
+}
+
 static void ManifestPreservesSavedLayout()
 {
     var generator = new ProceduralWorldGenerator();
-    var saved = WorldManifest.FromGeneratedWorld(generator.Generate(new GenerationSettings { Seed = 3001 }));
+    var saved = WorldManifest.FromGeneratedWorld(generator.Generate(new GenerationSettings { Seed = 3001 }), terrainResolved: true);
     var changedGlobalLayout = generator.Generate(new GenerationSettings { Seed = 9009 });
 
     Require(!Flatten(saved.ToGeneratedWorld()).SequenceEqual(Flatten(changedGlobalLayout)), "test seeds unexpectedly produced the same layout");
@@ -135,7 +174,7 @@ static void CorruptManifestIsRejected()
 
 static void FutureManifestSchemaIsRejected()
 {
-    var manifest = WorldManifest.FromGeneratedWorld(new ProceduralWorldGenerator().Generate(new GenerationSettings()));
+    var manifest = WorldManifest.FromGeneratedWorld(new ProceduralWorldGenerator().Generate(new GenerationSettings()), terrainResolved: true);
     manifest.SchemaVersion = WorldManifest.CurrentSchemaVersion + 1;
     RequireThrows(manifest.Validate, "future schema was accepted");
 }

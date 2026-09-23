@@ -2,11 +2,11 @@
 
 Abyssal Ecologies is an experimental mod for the original **Subnautica (2018)** that adds deterministic, procedurally arranged **micro-biomes** to the base game's world. It is not for Subnautica 2 or Subnautica: Below Zero. A generation seed selects region positions, species variants, environmental clusters, and a central landmark. The same seed always produces the same layout.
 
-The current `0.2.1` vertical slice is intentionally asset-light: it clones, recolors, and rescales base-game prefabs to prove the world-generation and Nautilus registration pipeline. It does **not** yet modify Subnautica's terrain mesh or biome lookup table, and the placeholder species do not yet have unique models, sounds, eggs, scan entries, or AI. Those are later content milestones after terrain-aware placement validation.
+The current `0.3.0` vertical slice is intentionally asset-light: it clones, recolors, and rescales base-game prefabs to prove the world-generation and Nautilus registration pipeline. It does **not** modify Subnautica's terrain mesh or biome lookup table, and the placeholder species do not yet have unique models, sounds, eggs, scan entries, or AI.
 
 ## Project status
 
-**Prototype — use disposable saves.** Content definitions register at startup, but layout generation now waits until a save has loaded. Each save persists its seed, schema version, regions, placements, and content identifiers in a versioned manifest, so later global configuration changes do not silently relocate it. Terrain probing, protected-site exclusions, and sustained reload testing remain active engineering work.
+**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. New saves stream the required world batches during the loading screen, snap flora and landmarks to suitable seabed, place fauna in clear water, and reject protected or invalid positions before persisting a schema-2 manifest. Existing schema-1 manifests load unchanged rather than moving established content silently.
 
 Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md](docs/WORK_PLAN.md). The longer product sequence is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -17,6 +17,8 @@ Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md]
 - Seeded PCG random generation that is stable across .NET and Unity versions.
 - Configurable region count, world radius, depth range, and separation.
 - A schema-1 per-save manifest loaded before the layout is registered with Nautilus coordinated spawns.
+- Schema-2 terrain-resolved manifests for new saves, including deterministic replacement searches.
+- Static protection around the Aurora, major precursor/Degasi sites, and lifepods; runtime rejection for wrecks, precursor structures, player bases, void, map edge, above-water terrain, excessive slopes, and inadequate fauna clearance.
 - Bounded success logs for actual prefab instances and `goto ae1`, `goto ae2`, and `goto ae3` field-check destinations.
 - A game-independent generator check executable.
 
@@ -47,13 +49,13 @@ To build, test, and create an install-ready ZIP in one step:
 
 ## Configure and test safely
 
-On first launch, BepInEx creates `BepInEx\config\rocks.verburgt.subnautica.abyssalecologies.cfg`. A new save captures those generation settings in `AbyssalEcologies\AbyssalEcologies.json` beneath its save-slot directory. After that, the saved manifest is authoritative and changing the global seed affects only saves that do not yet have a manifest.
+On first launch, BepInEx creates `BepInEx\config\rocks.verburgt.subnautica.abyssalecologies.cfg`. A new save captures those generation settings and its resolved terrain positions in `AbyssalEcologies\AbyssalEcologies.json` beneath its save-slot directory. After that, the saved manifest is authoritative and changing the global seed affects only saves that do not yet have a manifest.
 
-Start with a new test save. At the main menu, `BepInEx\LogOutput.log` should say that content definitions are registered and generation is waiting. After the save loads, the log reports whether the manifest was generated or loaded, lists each region, and records up to three successful instances per content type. Use `goto ae1`, `goto ae2`, and `goto ae3` in the developer console for targeted checks.
+Start with a new test save for 0.3.0. At the main menu, `BepInEx\LogOutput.log` should say that content definitions are registered and generation is waiting. During the first load, the loading screen reports terrain batches and surface snapping. The log then reports adjusted/rejected counts, the schema-2 manifest, each region, and up to three successful instances per content type. Use `goto ae1`, `goto ae2`, and `goto ae3` for targeted checks.
 
-Do not use this prototype on the only copy of an important save. The manifest is deterministic and version-checked, but the current vertical slice has not yet terrain-probed every placement or completed its uninstall/reload acceptance gates.
+Do not use this prototype on the only copy of an important save. Terrain resolution is versioned and deterministic, but the current slice still requires representative in-game inspection and uninstall testing.
 
-Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.2.1 safely refuses to mix a second manifest into the active session, but it cannot replace the first layout without a restart.
+Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.3.0 safely refuses to mix a second manifest into the active session, but it cannot replace the first layout without a restart.
 
 ## Isolated Windows test launcher
 
