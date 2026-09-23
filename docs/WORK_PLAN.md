@@ -21,7 +21,7 @@ The repository currently provides:
 - a guarded Windows launcher for a copied test installation; and
 - automated checks for determinism, seed variation, placement counts, exclusion from the starting radius, depth bounds, and inter-region separation.
 
-The solution builds with zero warnings. The checks cover 100 seeds, schema-1 fixture loading, byte-stable manifest round trips, configuration isolation, and rejection of corrupt or future schemas. The first in-game slice confirmed that flora and fauna appear in all three regions. This does not yet prove terrain-safe placement or stable save/quit/reload behavior.
+The solution builds with zero warnings. The checks cover 100 seeds, schema-1 fixture loading, byte-stable manifest round trips, configuration isolation, and rejection of corrupt or future schemas. In-game testing confirmed flora and fauna in all three regions and preserved the same layout through save, full exit, relaunch, and reload. The invalid drillable source used by the Thermal Spire was replaced in 0.2.1 with the already proven Membrain Tree source; that visual correction still needs its focused `goto ae3` check.
 
 ## Active milestone: terrain-aware save manifests
 
@@ -32,7 +32,7 @@ This is the critical path. Original art and expanded content remain blocked unti
 | Done | Save lifecycle hook | Generation starts only after a save slot and world are ready | Supported Nautilus late-load task; main-menu log reports definitions only |
 | P0 | Terrain probing | Candidate flora and landmarks snap to valid surfaces; swimming fauna remain in water volumes | Seed test report contains no buried, airborne, or above-water placements |
 | P0 | Exclusion volumes | Reject Aurora, lifepods, wrecks, precursor sites, void, map edge, and player structures | Automated rejection tests plus an in-game inspection checklist |
-| Done* | Per-save manifest | Persist seed, schema version, regions, placements, and content identifiers | Fixture and round-trip checks pass; in-game save/quit/reload evidence remains required |
+| Done | Per-save manifest | Persist seed, schema version, regions, placements, and content identifiers | Fixture and round-trip checks plus in-game save/quit/relaunch/reload passed |
 | P1 | Developer commands | Print manifest, teleport to region, show bounds, and validate placements | Commands work in a disposable save and produce bounded diagnostic output |
 | P1 | Migration framework | Refuse incompatible manifests and migrate explicitly supported schemas | Fixture tests cover current, previous, corrupt, and future schema versions |
 | P1 | Performance budget | Stream regions without persistent whole-map objects | Profiling captures frame time, allocations, object count, and unload behavior |

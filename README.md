@@ -2,7 +2,7 @@
 
 Abyssal Ecologies is an experimental mod for the original **Subnautica (2018)** that adds deterministic, procedurally arranged **micro-biomes** to the base game's world. It is not for Subnautica 2 or Subnautica: Below Zero. A generation seed selects region positions, species variants, environmental clusters, and a central landmark. The same seed always produces the same layout.
 
-The current `0.2.0` vertical slice is intentionally asset-light: it clones, recolors, and rescales base-game prefabs to prove the world-generation and Nautilus registration pipeline. It does **not** yet modify Subnautica's terrain mesh or biome lookup table, and the placeholder species do not yet have unique models, sounds, eggs, scan entries, or AI. Those are later content milestones after terrain-aware placement validation.
+The current `0.2.1` vertical slice is intentionally asset-light: it clones, recolors, and rescales base-game prefabs to prove the world-generation and Nautilus registration pipeline. It does **not** yet modify Subnautica's terrain mesh or biome lookup table, and the placeholder species do not yet have unique models, sounds, eggs, scan entries, or AI. Those are later content milestones after terrain-aware placement validation.
 
 ## Project status
 
@@ -53,7 +53,7 @@ Start with a new test save. At the main menu, `BepInEx\LogOutput.log` should say
 
 Do not use this prototype on the only copy of an important save. The manifest is deterministic and version-checked, but the current vertical slice has not yet terrain-probed every placement or completed its uninstall/reload acceptance gates.
 
-Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.2.0 safely refuses to mix a second manifest into the active session, but it cannot replace the first layout without a restart.
+Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.2.1 safely refuses to mix a second manifest into the active session, but it cannot replace the first layout without a restart.
 
 ## Isolated Windows test launcher
 

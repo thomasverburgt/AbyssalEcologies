@@ -27,7 +27,7 @@ internal static class ContentRegistrar
         new("ghost-bloom", "Ghost Bloom", "A pale colony that shelters juvenile lantern skates.", "SmallFan", new Color(0.55f, 0.75f, 1f), new Color(0.2f, 0.45f, 1f)),
 
         new("glass-arch", "Glass Arch", "The mineralized heart of a Glass Kelp Garden.", "CoralShellPlate", new Color(0.2f, 0.9f, 1f), new Color(0.15f, 0.65f, 1f)),
-        new("thermal-spire", "Thermal Spire", "A mineral chimney marking an Ember Trench colony.", "DrillableKyanite", new Color(1f, 0.25f, 0.02f), new Color(1f, 0.08f, 0.01f)),
+        new("thermal-spire", "Thermal Spire", "A towering heat-bright colony marking an Ember Trench.", "MembrainTree", new Color(1f, 0.25f, 0.02f), new Color(1f, 0.08f, 0.01f)),
         new("nursery-heart", "Nursery Heart", "A vast bloom at the center of a Ghostlight Nursery.", "MembrainTree", new Color(0.45f, 0.65f, 1f), new Color(0.2f, 0.3f, 1f))
     };
 
@@ -89,6 +89,7 @@ internal static class ContentRegistrar
         prefab.SetGameObject(template);
         prefab.Register();
         RegisteredTechTypes.Add(definition.Id, prefab.Info.TechType);
+        Plugin.Log.LogInfo($"Registered '{definition.Id}' definition from proven source TechType '{definition.SourceTechType}'.");
     }
 
     private static SpawnLocation ToSpawnLocation(GeneratedPlacement placement)
