@@ -76,7 +76,13 @@ internal sealed class TerrainPlacementResolver
                     continue;
 
                 _task.Status = $"Streaming terrain probe batch {batchNumber}/{requiredBatches.Count}";
-                yield return streamer.LoadBatchAsync(batch);
+                // LargeWorldStreamer.LoadBatchAsync ends by synchronously pumping
+                // FinalizeLoadBatchAsync. Runtime batch finalization yields async wait
+                // objects, which that pump rejects and retries forever. Follow the
+                // same tasked load/finalize sequence used by the game's streamer.
+                var batchCells = streamer.cellManager.InitializeBatchCells(batch);
+                yield return streamer.LoadBatchTaskedAsync(batchCells, false);
+                yield return streamer.FinalizeLoadBatchAsync(batch, false);
                 _probeLoadedBatches.Add(batch);
             }
 

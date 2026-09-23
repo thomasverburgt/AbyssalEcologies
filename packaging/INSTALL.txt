@@ -1,4 +1,4 @@
-Abyssal Ecologies 0.3.0
+Abyssal Ecologies 0.3.1
 
 Requirements:
 - Original Subnautica (2018), current non-Legacy desktop branch
@@ -14,7 +14,7 @@ Install:
 6. Check BepInEx/LogOutput.log for manifest status, region coordinates, and sampled prefab instances.
 7. Use `goto ae1`, `goto ae2`, and `goto ae3` in the developer console for field checks.
 
-Restart Subnautica before switching to a different save slot. Version 0.3.0 refuses to mix two per-save manifests in one running game process.
+Restart Subnautica before switching to a different save slot. Version 0.3.1 refuses to mix two per-save manifests in one running game process.
 
 Configuration is created at:
 BepInEx/config/rocks.verburgt.subnautica.abyssalecologies.cfg

@@ -21,7 +21,7 @@ The repository currently provides:
 - a guarded Windows launcher for a copied test installation; and
 - automated checks for determinism, seed variation, placement counts, exclusion from the starting radius, depth bounds, and inter-region separation.
 
-The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, schema-1 fixture compatibility, byte-stable schema-2 manifest round trips, configuration isolation, and rejection of corrupt or future schemas. Version 0.2.1 passed full in-game content and save/reload testing, including the repaired Thermal Spire. Version 0.3.0 adds terrain-aware generation for new saves and is awaiting its representative in-game inspection.
+The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, schema-1 fixture compatibility, byte-stable schema-2 manifest round trips, configuration isolation, and rejection of corrupt or future schemas. Version 0.2.1 passed full in-game content and save/reload testing, including the repaired Thermal Spire. Version 0.3.1 adds terrain-aware generation for new saves, fixes the initial runtime batch-loading hang found in 0.3.0, and is awaiting its representative in-game inspection.
 
 ## Active milestone: terrain-aware save manifests
 
