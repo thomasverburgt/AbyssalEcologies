@@ -11,9 +11,9 @@ Exit gate: compile succeeds, generator checks pass, and each configured seed reg
 ## Milestone 1 — terrain-aware placement
 
 - Delay final placement until a save is loaded. *(implemented in 0.2.0)*
-- Probe terrain and water with downward raycasts. *(implemented in 0.3.1; field validation pending)*
-- Reject Aurora, precursor-base, lifepod, wreck, void, and player-base exclusion volumes. *(implemented in 0.3.1; field validation pending)*
-- Persist a generated-world manifest per save slot so later configuration changes cannot silently relocate content. *(schema 1 validated in 0.2.1; terrain-resolved schema 2 added in 0.3.1)*
+- Probe terrain and water with downward raycasts. *(experimental resolver retained, but remote batch streaming was disabled in 0.3.2 after live-load failures)*
+- Reject Aurora, precursor-base, lifepod, wreck, void, and player-base exclusion volumes. *(static exclusions active in 0.3.2; live terrain/object checks deferred with the resolver)*
+- Persist a generated-world manifest per save slot so later configuration changes cannot silently relocate content. *(schema 1 active and validated; schema 2 remains reserved for genuinely terrain-resolved layouts)*
 - Add a developer command that prints, regenerates, and visualizes the manifest in a disposable test save.
 
 Exit gate: at least 100 seed runs produce no floating flora, buried landmarks, blocked story entrances, or placements inside existing bases.

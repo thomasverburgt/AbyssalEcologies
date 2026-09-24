@@ -14,7 +14,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string Guid = "rocks.verburgt.subnautica.abyssalecologies";
     public const string Name = "Abyssal Ecologies";
-    public const string Version = "0.3.1";
+    public const string Version = "0.3.2";
 
     internal static ManualLogSource Log { get; private set; } = null!;
 
@@ -65,13 +65,11 @@ public sealed class Plugin : BaseUnityPlugin
         GeneratedWorld world;
         if (_saveData.Manifest == null)
         {
-            var candidateWorld = new ProceduralWorldGenerator().Generate(_settings);
-            var resolver = new TerrainPlacementResolver(candidateWorld, task);
-            yield return resolver.Run();
-            world = resolver.Result
-                ?? throw new InvalidOperationException("Terrain resolution completed without a generated world.");
-            _saveData.Manifest = WorldManifest.FromGeneratedWorld(world, terrainResolved: true);
-            Logger.LogInfo($"Generated terrain-resolved manifest schema {WorldManifest.CurrentSchemaVersion} for this save using seed {world.Seed}; adjusted {resolver.AdjustedPlacements}, rejected {resolver.RejectedPlacements}.");
+            task.Status = "Generating protected deterministic micro-biomes";
+            world = new ProceduralWorldGenerator().Generate(_settings);
+            _saveData.Manifest = WorldManifest.FromGeneratedWorld(world, terrainResolved: false);
+            Logger.LogWarning($"Generated safe legacy manifest schema {_saveData.Manifest.SchemaVersion} for this save using seed {world.Seed}. Remote terrain probing is disabled because forced batch streaming is unsafe during Subnautica's late load phase.");
+            yield return null;
         }
         else
         {
