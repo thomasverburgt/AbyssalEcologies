@@ -1,6 +1,6 @@
 # Abyssal Ecologies work plan
 
-Last updated: 2026-09-22
+Last updated: 2026-09-24
 
 ## Objective
 
@@ -21,7 +21,7 @@ The repository currently provides:
 - a guarded Windows launcher for a copied test installation; and
 - automated checks for determinism, seed variation, placement counts, exclusion from the starting radius, depth bounds, and inter-region separation.
 
-The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, schema-1 fixture compatibility, byte-stable schema-2 manifest round trips, configuration isolation, and rejection of corrupt or future schemas. Version 0.2.1 passed full in-game content and save/reload testing, including the repaired Thermal Spire. Version 0.3.2 retains deterministic generation and static protected-area exclusions but disables forced remote terrain streaming after live tests proved that both available batch-loading paths destabilize Subnautica's late load phase. Terrain-aware placement remains the next unresolved engineering slice.
+The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, schema-1 fixture compatibility, byte-stable schema-2 manifest round trips, configuration isolation, and rejection of corrupt or future schemas. Version 0.3.2 passed in-game testing on 2026-09-24: initial load, all three regions and nine content types, the Thermal Spire, save, full restart, reload, and revisit. It retains deterministic generation and static protected-area exclusions but disables forced remote terrain streaming after live tests proved that both available batch-loading paths destabilize Subnautica's late load phase. Terrain-aware placement remains the next unresolved engineering slice.
 
 ## Active milestone: terrain-aware save manifests
 
@@ -30,8 +30,8 @@ This is the critical path. Original art and expanded content remain blocked unti
 | Priority | Work item | Deliverable | Acceptance evidence |
 | --- | --- | --- | --- |
 | Done | Save lifecycle hook | Generation starts only after a save slot and world are ready | Supported Nautilus late-load task; main-menu log reports definitions only |
-| In test | Terrain probing | Candidate flora and landmarks snap to valid surfaces; swimming fauna remain in water volumes | Implementation and offline checks pass; new-save field inspection pending |
-| In test | Exclusion volumes | Reject Aurora, lifepods, wrecks, precursor sites, void, map edge, and player structures | Static and runtime rejection implemented; in-game inspection pending |
+| Deferred | Terrain probing | Candidate flora and landmarks snap to valid surfaces; swimming fauna remain in water volumes | Experimental resolver retained; both forced remote batch-loading paths failed live testing and are disabled |
+| Partial | Exclusion volumes | Reject Aurora, lifepods, wrecks, precursor sites, void, map edge, and player structures | Static exclusions are active and the representative layout passed inspection; runtime terrain/object rejection is deferred |
 | Done | Per-save manifest | Persist seed, schema version, regions, placements, and content identifiers | Fixture and round-trip checks plus in-game save/quit/relaunch/reload passed |
 | P1 | Developer commands | Print manifest, teleport to region, show bounds, and validate placements | Commands work in a disposable save and produce bounded diagnostic output |
 | P1 | Migration framework | Refuse incompatible manifests and migrate explicitly supported schemas | Fixture tests cover current, previous, corrupt, and future schema versions |

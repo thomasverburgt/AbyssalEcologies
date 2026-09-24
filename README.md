@@ -6,7 +6,9 @@ The current `0.3.2` vertical slice is intentionally asset-light: it clones, reco
 
 ## Project status
 
-**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. New saves stream the required world batches during the loading screen, snap flora and landmarks to suitable seabed, place fauna in clear water, and reject protected or invalid positions before persisting a schema-2 manifest. Existing schema-1 manifests load unchanged rather than moving established content silently.
+**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. Version 0.3.2 creates a deterministic schema-1 manifest with static protected-area exclusions and does not force remote terrain streaming during the loading screen. Live terrain snapping remains an unresolved milestone because both tested remote batch-loading paths destabilized Subnautica's late-load phase.
+
+Version 0.3.2 passed its representative in-game regression on 2026-09-24: initial load, all three regions, all flora/fauna/landmarks, the Thermal Spire, save, full restart, reload, and revisit.
 
 Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md](docs/WORK_PLAN.md). The longer product sequence is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -17,8 +19,8 @@ Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md]
 - Seeded PCG random generation that is stable across .NET and Unity versions.
 - Configurable region count, world radius, depth range, and separation.
 - A schema-1 per-save manifest loaded before the layout is registered with Nautilus coordinated spawns.
-- Schema-2 terrain-resolved manifests for new saves, including deterministic replacement searches.
-- Static protection around the Aurora, major precursor/Degasi sites, and lifepods; runtime rejection for wrecks, precursor structures, player bases, void, map edge, above-water terrain, excessive slopes, and inadequate fauna clearance.
+- A reserved schema-2 format and deterministic replacement-search implementation for future terrain-resolved manifests; the experimental runtime resolver is not active in 0.3.2.
+- Active static protection around the Aurora, major precursor/Degasi sites, and lifepods. Runtime terrain and nearby-object rejection remains deferred with the experimental resolver.
 - Bounded success logs for actual prefab instances and `goto ae1`, `goto ae2`, and `goto ae3` field-check destinations.
 - A game-independent generator check executable.
 
@@ -49,11 +51,11 @@ To build, test, and create an install-ready ZIP in one step:
 
 ## Configure and test safely
 
-On first launch, BepInEx creates `BepInEx\config\rocks.verburgt.subnautica.abyssalecologies.cfg`. A new save captures those generation settings and its resolved terrain positions in `AbyssalEcologies\AbyssalEcologies.json` beneath its save-slot directory. After that, the saved manifest is authoritative and changing the global seed affects only saves that do not yet have a manifest.
+On first launch, BepInEx creates `BepInEx\config\rocks.verburgt.subnautica.abyssalecologies.cfg`. A new save captures those generation settings and deterministic positions in `AbyssalEcologies\AbyssalEcologies.json` beneath its save-slot directory. After that, the saved manifest is authoritative and changing the global seed affects only saves that do not yet have a manifest.
 
 Start with a new test save for 0.3.2. At the main menu, `BepInEx\LogOutput.log` should say that content definitions are registered and generation is waiting. During the first load, the mod creates a schema-1 per-save manifest using deterministic coordinates and static protected-area exclusions. The log then reports each region and up to three successful instances per content type. Use `goto ae1`, `goto ae2`, and `goto ae3` for targeted checks.
 
-Do not use this prototype on the only copy of an important save. Terrain resolution is versioned and deterministic, but the current slice still requires representative in-game inspection and uninstall testing.
+Do not use this prototype on the only copy of an important save. The 0.3.2 layout passed representative in-game inspection, but terrain-aware placement and uninstall testing remain incomplete.
 
 Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.3.2 safely refuses to mix a second manifest into the active session, but it cannot replace the first layout without a restart.
 
