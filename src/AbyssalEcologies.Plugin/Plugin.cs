@@ -14,7 +14,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string Guid = "rocks.verburgt.subnautica.abyssalecologies";
     public const string Name = "Abyssal Ecologies";
-    public const string Version = "0.3.2";
+    public const string Version = "0.4.0";
 
     internal static ManualLogSource Log { get; private set; } = null!;
 
@@ -32,6 +32,7 @@ public sealed class Plugin : BaseUnityPlugin
             _settings = BindSettings();
             _saveData = SaveDataHandler.RegisterSaveDataCache<AbyssalEcologiesSaveData>();
             var definitionCount = ContentRegistrar.RegisterDefinitions();
+            DiagnosticCommands.Register();
             WaitScreenHandler.RegisterLateAsyncLoadTask(Name, OnWorldReady, "Preparing manifest-backed micro-biomes");
 
             Logger.LogInfo($"{Name} {Version} registered {definitionCount} content definitions. World generation is waiting for a loaded save.");
@@ -77,12 +78,13 @@ public sealed class Plugin : BaseUnityPlugin
             if (_saveData.Manifest.TerrainResolved)
                 Logger.LogInfo($"Loaded terrain-resolved manifest schema {_saveData.Manifest.SchemaVersion} for this save using persisted seed {world.Seed}; current global generation settings were ignored.");
             else
-                Logger.LogWarning($"Loaded legacy schema {_saveData.Manifest.SchemaVersion} manifest using its validated coordinates unchanged. Start a new disposable save to test terrain-aware generation.");
+                Logger.LogWarning($"Loaded schema {_saveData.Manifest.SchemaVersion} manifest using its validated deterministic coordinates unchanged. Runtime terrain probing is disabled in {Version}.");
         }
 
         try
         {
             ContentRegistrar.RegisterWorldSpawns(world);
+            DiagnosticCommands.SetActive(_saveData.Manifest, world);
             _activeManifestJson = WorldManifestSerializer.Serialize(_saveData.Manifest);
             _worldRegistered = true;
             task.Status = $"Registered {world.Regions.Count} micro-biomes";

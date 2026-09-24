@@ -14,7 +14,8 @@ Exit gate: compile succeeds, generator checks pass, and each configured seed reg
 - Probe terrain and water with downward raycasts. *(experimental resolver retained, but remote batch streaming was disabled in 0.3.2 after live-load failures)*
 - Reject Aurora, precursor-base, lifepod, wreck, void, and player-base exclusion volumes. *(static exclusions active in 0.3.2; live terrain/object checks deferred with the resolver)*
 - Persist a generated-world manifest per save slot so later configuration changes cannot silently relocate content. *(schema 1 active and validated; schema 2 remains reserved for genuinely terrain-resolved layouts)*
-- Add a developer command that prints, regenerates, and visualizes the manifest in a disposable test save.
+- Add developer diagnostics that print the manifest, report region bounds, validate placements, and expose field-check teleports. *(implemented in 0.4.0; field validation pending)*
+- Add explicitly guarded manifest regeneration and temporary in-world boundary visualization for disposable saves.
 
 Exit gate: at least 100 seed runs produce no floating flora, buried landmarks, blocked story entrances, or placements inside existing bases.
 

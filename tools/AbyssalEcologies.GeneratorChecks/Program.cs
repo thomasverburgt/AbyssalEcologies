@@ -17,6 +17,8 @@ Check("schema 2 fixture loads without drift", SchemaTwoFixtureLoadsWithoutDrift)
 Check("manifest preserves saved layout over new settings", ManifestPreservesSavedLayout);
 Check("corrupt manifest is rejected", CorruptManifestIsRejected);
 Check("future manifest schema is rejected", FutureManifestSchemaIsRejected);
+Check("world diagnostics accept generated layouts", WorldDiagnosticsAcceptGeneratedLayouts);
+Check("world diagnostics reject invalid layouts", WorldDiagnosticsRejectInvalidLayouts);
 
 if (failures.Count > 0)
 {
@@ -177,6 +179,28 @@ static void FutureManifestSchemaIsRejected()
     var manifest = WorldManifest.FromGeneratedWorld(new ProceduralWorldGenerator().Generate(new GenerationSettings()), terrainResolved: true);
     manifest.SchemaVersion = WorldManifest.CurrentSchemaVersion + 1;
     RequireThrows(manifest.Validate, "future schema was accepted");
+}
+
+static void WorldDiagnosticsAcceptGeneratedLayouts()
+{
+    var generator = new ProceduralWorldGenerator();
+    for (var seed = 0; seed < 100; seed++)
+    {
+        var world = generator.Generate(new GenerationSettings { Seed = seed });
+        var report = WorldDiagnostics.Validate(world);
+        Require(report.IsValid, $"seed {seed}: {string.Join(" | ", report.Errors)}");
+        Require(report.RegionCount == 3, "diagnostics changed the region count");
+        Require(report.PlacementCount == 123, "diagnostics changed the placement count");
+    }
+}
+
+static void WorldDiagnosticsRejectInvalidLayouts()
+{
+    var invalidPlacement = new GeneratedPlacement("bad", PlacementKind.Landmark, new WorldPoint(500f, -20f, 500f), new WorldPoint(), -1f);
+    var invalidRegion = new GeneratedRegion("bad", "Bad Region", new WorldPoint(500f, -20f, 500f), 10f, new[] { invalidPlacement });
+    var report = WorldDiagnostics.Validate(new GeneratedWorld(1, new[] { invalidRegion }));
+    Require(!report.IsValid, "diagnostics accepted an invalid layout");
+    Require(report.Errors.Count >= 2, "diagnostics did not report bounded invariant failures");
 }
 
 static IReadOnlyList<string> Flatten(GeneratedWorld world) => world.Regions
