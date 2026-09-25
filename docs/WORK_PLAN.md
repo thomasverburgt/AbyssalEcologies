@@ -21,7 +21,7 @@ The repository currently provides:
 - a guarded Windows launcher for a copied test installation; and
 - automated checks for determinism, seed variation, placement counts, exclusion from the starting radius, depth bounds, and inter-region separation.
 
-The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, coordinate-preserving schema migration, byte-stable schema-3 round trips, incompatible-schema rejection, world diagnostics, performance-budget pass/fail behavior, and guarded manifest regeneration. Version 0.5.1 passed its migration/save/restart field test with the same seed and all 123 placements. Version 0.6.0 passed its bounded late-setup, registration, managed-memory, placement-count, instantiation-callback, live-object, unload, and full-restart field test. Version 0.7.0's boundaries passed, but its sidecar backup was discarded when Subnautica promoted TempSave. Version 0.7.1 passed the corrected durable-backup, required-save, restart activation, validation, performance, and regenerated-content field checks. Terrain-aware placement remains unresolved because both forced remote batch-loading paths destabilized Subnautica's late load phase.
+The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, coordinate-preserving schema migration, byte-stable schema-3 round trips, incompatible-schema rejection, world diagnostics, performance-budget pass/fail behavior, and guarded manifest regeneration. Version 0.5.1 passed its migration/save/restart field test with the same seed and all 123 placements. Version 0.6.0 passed its bounded late-setup, registration, managed-memory, placement-count, instantiation-callback, live-object, unload, and full-restart field test. Version 0.7.0's boundaries passed, but its sidecar backup was discarded when Subnautica promoted TempSave. Version 0.7.1 passed the corrected durable-backup, required-save, restart activation, validation, performance, regenerated-content, and temporary-removal recovery checks. Terrain-aware placement remains unresolved because both forced remote batch-loading paths destabilized Subnautica's late load phase.
 
 ## Active milestone: terrain-aware save manifests
 
@@ -37,6 +37,7 @@ This is the critical path. Original art and expanded content remain blocked unti
 | Done | Migration framework | Refuse incompatible manifests and migrate explicitly supported schemas | Offline fixtures pass; schema 1 to schema 3 save/restart field migration passed without coordinate drift on 2026-09-25 |
 | Done | Performance budget | Stream regions without persistent whole-map objects | `ae_perf` passed load, AE1/AE2 streaming, unload, and full-restart checks on 2026-09-25; 123/123 placements remained registered |
 | Done | Disposable regeneration and boundaries | Visualize region extents and safely stage a new deterministic layout | 0.7.1 passed refusal/no-write, temporary visualization, exact durable backup, save promotion, restart activation, validation, performance, and regenerated-content checks on 2026-09-25 |
+| Done with limitation | Temporary removal and recovery | Prove a backed-up vanilla save can load without the mod and recover after restoration | Save loaded and content returned byte-identically after DLL restoration on 2026-09-25; mod-absent loads emit missing-prefab errors, must not be saved, and permanent uninstall remains unsupported |
 
 ### Milestone acceptance gate
 
@@ -47,7 +48,7 @@ Milestone 1 is complete only when all of the following are true:
 3. No inspected landmark blocks vanilla progression or intersects a protected site.
 4. Save, quit, reload, and revisit preserve the same manifest and objects.
 5. Changing global configuration does not silently relocate an existing save's generated content.
-6. Removing the mod leaves the vanilla save loadable, with limitations documented before public testing.
+6. Removing the mod leaves the vanilla save loadable, with limitations documented before public testing. *(Temporary removal passed on 2026-09-25; missing-prefab errors and the no-save restriction are documented. Permanent uninstall remains unsupported.)*
 
 ## Subsequent milestones
 
@@ -91,4 +92,4 @@ Passing automated checks or reaching the main menu is not sufficient evidence of
 
 ## Immediate next increment
 
-Complete the isolated uninstall/recovery acceptance test. Back up the seed-451232 save, quit fully, quarantine only the Abyssal Ecologies plugin binaries, confirm the vanilla save remains loadable with generated objects absent, then restore the exact 0.7.1 binaries and confirm the same schema-3 manifest, seed, placements, and generated content return unchanged.
+Run a bounded representative-seed inspection before leaving Milestone 1. Select layouts that exercise shallow, middle, and deep configured ranges; validate each manifest, visit all three generated regions, and record floating flora, buried landmarks, protected-site interference, and return-path issues. Preserve each tested manifest and do not revive unsafe remote terrain streaming.

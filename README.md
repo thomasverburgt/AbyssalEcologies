@@ -18,6 +18,8 @@ Version 0.6.0 passed its performance field test on 2026-09-25. Initial load meas
 
 Version 0.7.1 passed its regeneration and boundary field test on 2026-09-25. Temporary rings and center markers appeared and were removed on command; incorrect confirmation left the manifest byte-identical; regeneration created an exact durable backup outside Subnautica's TempSave cache; and save, quit, restart activated seed 451232 with schema 3, 123 placements, zero validation errors, a passing performance budget, and all three AE1 content groups. Version 0.7.0 was not accepted because its TempSave sidecar backup was discarded during save promotion.
 
+Version 0.7.1 also passed a temporary-removal recovery test on 2026-09-25. The backed-up save loaded with the plugin DLLs quarantined and the custom content absent, then returned byte-identically with all AE1 content after the exact DLLs were restored. The mod-absent load emitted missing-prefab errors for saved custom instances, so **do not save while Abyssal Ecologies is missing**. Permanent uninstall is not yet supported or validated.
+
 Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md](docs/WORK_PLAN.md). The longer product sequence is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What is implemented
@@ -69,7 +71,9 @@ For the 0.6.0 performance test, load the validated schema-3 disposable save and 
 
 For the 0.7.1 field test, run `ae_boundaries 90` and inspect the bright radius ring and vertical center marker at a field-check region; then run `ae_boundaries_off`. A missing or incorrect regeneration confirmation must be refused without writing files. On a disposable save only, `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION` writes a timestamped durable backup under the BepInEx configuration directory and stages the replacement in Subnautica's live save cache. Save the game, fully quit, and restart; then `ae_manifest` must report the new seed and `ae_validate` must pass.
 
-Do not use this prototype on the only copy of an important save. The 0.3.2 layout passed representative in-game inspection, but terrain-aware placement and uninstall testing remain incomplete.
+Do not use this prototype on the only copy of an important save. The 0.3.2 layout passed representative in-game inspection, but terrain-aware placement and permanent uninstall remain incomplete.
+
+Temporary removal is recoverable only with care: fully quit, back up the save, quarantine the two Abyssal Ecologies DLLs, and expect missing-prefab errors while the save is loaded without the mod. Do not save in that state. Quit and restore the exact plugin DLLs before continuing; version 0.7.1 restored the unchanged manifest and generated content in the isolated field test. Permanent uninstall remains unsupported.
 
 Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.7.1 safely refuses to mix a second manifest into the active session and stages regeneration only for the next process.
 

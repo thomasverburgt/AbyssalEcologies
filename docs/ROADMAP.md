@@ -50,4 +50,5 @@ Exit gate: every generated location has a reachable entrance, a safe return path
 - Freeze a manifest schema and add migrations before public saves exist.
 - Test common world, map, creature, and performance mods.
 - Package exact dependencies and supported game build information.
+- Support a deliberate permanent-uninstall path; 0.7.1 validates temporary removal and exact restoration only, with missing-prefab errors and a strict no-save limitation while absent.
 - Publish only after clean-install, upgrade, uninstall, and save-recovery tests pass.
