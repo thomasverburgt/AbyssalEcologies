@@ -1,4 +1,4 @@
-Abyssal Ecologies 0.7.0
+Abyssal Ecologies 0.7.1
 
 Requirements:
 - Original Subnautica (2018), current non-Legacy desktop branch
@@ -15,9 +15,9 @@ Install:
 7. Run `ae_perf` after loading, after `goto ae1`, and after `goto ae2`. The initial budget must pass with 123 registered placements and nine content types; later reports expose cumulative callbacks and currently live custom objects.
 8. Run `ae_boundaries 90` to draw non-colliding region rings and center markers for 90 seconds; use `ae_boundaries_off` to remove them early.
 
-Restart Subnautica before switching to a different save slot. Version 0.7.0 refuses to mix two per-save manifests in one running game process.
+Restart Subnautica before switching to a different save slot. Version 0.7.1 refuses to mix two per-save manifests in one running game process.
 
-Disposable-save regeneration is deliberately restart-only. `ae_regenerate <new-seed> CONFIRM_DISPOSABLE_SAVE_REGENERATION` first writes a timestamped byte-for-byte backup beside the manifest, then stages the new deterministic layout. The active world does not change until Subnautica is fully restarted. The command rejects missing confirmation, the active seed, and a second regeneration in the same process.
+Disposable-save regeneration is deliberately restart-only. `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION` first writes a timestamped byte-for-byte backup under `BepInEx/config/AbyssalEcologies/manifest-backups`, then stages the new deterministic layout in Subnautica's live save cache. The active world does not change until the game is saved, fully quit, and restarted. The command rejects missing confirmation, the active seed, and a second regeneration in the same process.
 
 Configuration is created at:
 BepInEx/config/rocks.verburgt.subnautica.abyssalecologies.cfg

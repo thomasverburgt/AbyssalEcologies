@@ -226,10 +226,11 @@ static void ManifestRegenerationRequiresExactConfirmation()
     var replacement = WorldManifest.FromGeneratedWorld(generator.Generate(new GenerationSettings { Seed = 101 }), terrainResolved: false);
     var directory = Path.Combine(Path.GetTempPath(), "AbyssalEcologies-check-" + Guid.NewGuid().ToString("N"));
     var path = Path.Combine(directory, "AbyssalEcologies.json");
+    var backupDirectory = Path.Combine(directory, "durable-backups");
     try
     {
         RequireThrows(
-            () => ManifestRegeneration.Stage(path, current, replacement, "wrong", DateTime.UtcNow),
+            () => ManifestRegeneration.Stage(path, backupDirectory, current, replacement, "wrong", DateTime.UtcNow),
             "regeneration accepted an incorrect confirmation phrase");
         Require(!File.Exists(path), "refused regeneration wrote a manifest");
         Require(!Directory.Exists(directory), "refused regeneration created a save-data directory");
@@ -249,18 +250,21 @@ static void ManifestRegenerationPreservesAndReplacesAtomically()
     var replacementJson = WorldManifestSerializer.Serialize(replacement);
     var directory = Path.Combine(Path.GetTempPath(), "AbyssalEcologies-check-" + Guid.NewGuid().ToString("N"));
     var path = Path.Combine(directory, "AbyssalEcologies.json");
+    var backupDirectory = Path.Combine(directory, "durable-backups");
     Directory.CreateDirectory(directory);
     File.WriteAllText(path, currentJson);
     try
     {
         var result = ManifestRegeneration.Stage(
             path,
+            backupDirectory,
             current,
             replacement,
             ManifestRegeneration.ConfirmationPhrase,
             new DateTime(2026, 9, 25, 12, 34, 56, DateTimeKind.Utc));
 
         Require(File.ReadAllText(result.BackupPath) == currentJson, "regeneration backup did not preserve the prior manifest bytes");
+        Require(Path.GetDirectoryName(result.BackupPath) == backupDirectory, "regeneration backup was not written to the durable directory");
         Require(File.ReadAllText(path) == replacementJson, "regeneration did not install the replacement manifest");
         Require(result.Seed == 201 && result.RegionCount == 3 && result.PlacementCount == 123, "regeneration result reported incorrect replacement metadata");
         Require(!File.Exists(path + ".regeneration.tmp"), "regeneration left its temporary file behind");
@@ -278,10 +282,11 @@ static void ManifestRegenerationRejectsNoOp()
         terrainResolved: false);
     var directory = Path.Combine(Path.GetTempPath(), "AbyssalEcologies-check-" + Guid.NewGuid().ToString("N"));
     var path = Path.Combine(directory, "AbyssalEcologies.json");
+    var backupDirectory = Path.Combine(directory, "durable-backups");
     try
     {
         RequireThrows(
-            () => ManifestRegeneration.Stage(path, manifest, manifest, ManifestRegeneration.ConfirmationPhrase, DateTime.UtcNow),
+            () => ManifestRegeneration.Stage(path, backupDirectory, manifest, manifest, ManifestRegeneration.ConfirmationPhrase, DateTime.UtcNow),
             "regeneration accepted an identical replacement manifest");
         Require(!File.Exists(path), "no-op regeneration wrote a manifest");
     }

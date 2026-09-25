@@ -16,7 +16,7 @@ Exit gate: compile succeeds, generator checks pass, and each configured seed reg
 - Persist a generated-world manifest per save slot so later configuration changes cannot silently relocate content. *(canonical schema 3, schema 1/2 migration, and legacy exclusion-policy preservation implemented and field-validated in 0.5.1)*
 - Add developer diagnostics that print the manifest, report region bounds, validate placements, and expose field-check teleports. *(implemented and field-validated in 0.4.0)*
 - Add bounded late-load and streaming performance instrumentation. *(implemented and field-validated in 0.6.0 on 2026-09-25, including unload and full-restart checks)*
-- Add explicitly guarded manifest regeneration and temporary in-world boundary visualization for disposable saves. *(implemented in 0.7.0; field validation pending)*
+- Add explicitly guarded manifest regeneration and temporary in-world boundary visualization for disposable saves. *(boundaries passed in 0.7.0; durable backup correction implemented in 0.7.1 and pending field validation)*
 
 Exit gate: at least 100 seed runs produce no floating flora, buried landmarks, blocked story entrances, or placements inside existing bases.
 

@@ -2,11 +2,11 @@
 
 Abyssal Ecologies is an experimental mod for the original **Subnautica (2018)** that adds deterministic, procedurally arranged **micro-biomes** to the base game's world. It is not for Subnautica 2 or Subnautica: Below Zero. A generation seed selects region positions, species variants, environmental clusters, and a central landmark. The same seed always produces the same layout.
 
-The current `0.7.0` vertical slice is intentionally asset-light: it clones, recolors, and rescales base-game prefabs to prove the world-generation and Nautilus registration pipeline. It does **not** modify Subnautica's terrain mesh or biome lookup table, and the placeholder species do not yet have unique models, sounds, eggs, scan entries, or AI.
+The current `0.7.1` vertical slice is intentionally asset-light: it clones, recolors, and rescales base-game prefabs to prove the world-generation and Nautilus registration pipeline. It does **not** modify Subnautica's terrain mesh or biome lookup table, and the placeholder species do not yet have unique models, sounds, eggs, scan entries, or AI.
 
 ## Project status
 
-**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. Version 0.7.0 retains the field-validated schema-3 migration and performance model while adding temporary region-boundary visualization and explicitly confirmed, backup-first manifest regeneration for disposable saves. Existing schema-1 deterministic and schema-2 terrain-resolved manifests migrate without moving saved coordinates; exclusions introduced after a legacy layout was created remain compatibility warnings. Live terrain snapping remains unresolved because both tested remote batch-loading paths destabilized Subnautica's late-load phase.
+**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. Version 0.7.1 retains the field-validated schema-3 migration and performance model while adding temporary region-boundary visualization and explicitly confirmed, durable-backup-first manifest regeneration for disposable saves. Existing schema-1 deterministic and schema-2 terrain-resolved manifests migrate without moving saved coordinates; exclusions introduced after a legacy layout was created remain compatibility warnings. Live terrain snapping remains unresolved because both tested remote batch-loading paths destabilized Subnautica's late-load phase.
 
 Version 0.3.2 passed its representative in-game regression on 2026-09-24: initial load, all three regions, all flora/fauna/landmarks, the Thermal Spire, save, full restart, reload, and revisit.
 
@@ -31,7 +31,7 @@ Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md]
 - Bounded success logs, `goto ae1`/`ae2`/`ae3` field-check destinations, and `ae_manifest`, `ae_bounds`, and `ae_validate` diagnostics.
 - An `ae_perf` diagnostic covering late-load setup time, coordinated-spawn registration time, managed-memory change, registered placements, cumulative instantiation callbacks, and currently live custom objects.
 - Temporary non-colliding region rings and center markers through `ae_boundaries [10-300 seconds]` and `ae_boundaries_off`.
-- Restart-only disposable-save regeneration through `ae_regenerate <new-seed> CONFIRM_DISPOSABLE_SAVE_REGENERATION`, with a timestamped byte-for-byte backup of the prior manifest.
+- Restart-only disposable-save regeneration through `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION`, with a timestamped byte-for-byte backup of the prior manifest under `BepInEx/config/AbyssalEcologies/manifest-backups`.
 - A game-independent generator check executable.
 
 ## Requirements
@@ -65,11 +65,11 @@ On first launch, BepInEx creates `BepInEx\config\rocks.verburgt.subnautica.abyss
 
 For the 0.6.0 performance test, load the validated schema-3 disposable save and run `ae_perf`. The initial report must pass the 250 ms late-setup, 100 ms spawn-registration, 16 MiB managed-memory, and exact-placement-count budgets, with 123 registered placements and nine content types. Run `goto ae1`, wait for the region to stream, and run `ae_perf` again; repeat with `goto ae2`. The later reports show cumulative instantiation callbacks and currently live objects so unloading behavior can be inspected without treating normal streaming variation as a hard failure.
 
-For the 0.7.0 field test, run `ae_boundaries 90` and inspect the bright radius ring and vertical center marker at a field-check region; then run `ae_boundaries_off`. A missing or incorrect regeneration confirmation must be refused without writing files. On a disposable save only, `ae_regenerate <new-seed> CONFIRM_DISPOSABLE_SAVE_REGENERATION` writes a timestamped backup beside the current manifest and stages the replacement. The active session remains unchanged until a full restart; after restarting, `ae_manifest` must report the new seed and `ae_validate` must pass.
+For the 0.7.1 field test, run `ae_boundaries 90` and inspect the bright radius ring and vertical center marker at a field-check region; then run `ae_boundaries_off`. A missing or incorrect regeneration confirmation must be refused without writing files. On a disposable save only, `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION` writes a timestamped durable backup under the BepInEx configuration directory and stages the replacement in Subnautica's live save cache. Save the game, fully quit, and restart; then `ae_manifest` must report the new seed and `ae_validate` must pass.
 
 Do not use this prototype on the only copy of an important save. The 0.3.2 layout passed representative in-game inspection, but terrain-aware placement and uninstall testing remain incomplete.
 
-Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.7.0 safely refuses to mix a second manifest into the active session and stages regeneration only for the next process.
+Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.7.1 safely refuses to mix a second manifest into the active session and stages regeneration only for the next process.
 
 ## Isolated Windows test launcher
 

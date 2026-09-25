@@ -28,6 +28,7 @@ public static class ManifestRegeneration
 
     public static ManifestRegenerationResult Stage(
         string manifestPath,
+        string backupDirectory,
         WorldManifest currentManifest,
         WorldManifest replacementManifest,
         string confirmation,
@@ -37,6 +38,8 @@ public static class ManifestRegeneration
             throw new InvalidOperationException($"Regeneration requires the exact confirmation phrase {ConfirmationPhrase}.");
         if (string.IsNullOrWhiteSpace(manifestPath))
             throw new ArgumentException("Manifest path is required.", nameof(manifestPath));
+        if (string.IsNullOrWhiteSpace(backupDirectory))
+            throw new ArgumentException("A durable backup directory is required.", nameof(backupDirectory));
         if (currentManifest == null) throw new ArgumentNullException(nameof(currentManifest));
         if (replacementManifest == null) throw new ArgumentNullException(nameof(replacementManifest));
 
@@ -53,8 +56,10 @@ public static class ManifestRegeneration
         var directory = Path.GetDirectoryName(fullManifestPath)
             ?? throw new InvalidDataException("The manifest path has no parent directory.");
         Directory.CreateDirectory(directory);
+        var fullBackupDirectory = Path.GetFullPath(backupDirectory);
+        Directory.CreateDirectory(fullBackupDirectory);
 
-        var backupPath = NextBackupPath(fullManifestPath, utcNow);
+        var backupPath = NextBackupPath(fullManifestPath, fullBackupDirectory, utcNow);
         if (File.Exists(fullManifestPath))
             File.Copy(fullManifestPath, backupPath, overwrite: false);
         else
@@ -84,15 +89,14 @@ public static class ManifestRegeneration
             world.Regions.Sum(region => region.Placements.Count));
     }
 
-    private static string NextBackupPath(string manifestPath, DateTime utcNow)
+    private static string NextBackupPath(string manifestPath, string backupDirectory, DateTime utcNow)
     {
-        var directory = Path.GetDirectoryName(manifestPath)!;
         var stem = Path.GetFileNameWithoutExtension(manifestPath);
         var extension = Path.GetExtension(manifestPath);
         var timestamp = utcNow.ToUniversalTime().ToString("yyyyMMddTHHmmssfffZ");
-        var candidate = Path.Combine(directory, $"{stem}.pre-regeneration-{timestamp}{extension}");
+        var candidate = Path.Combine(backupDirectory, $"{stem}.pre-regeneration-{timestamp}{extension}");
         for (var suffix = 1; File.Exists(candidate); suffix++)
-            candidate = Path.Combine(directory, $"{stem}.pre-regeneration-{timestamp}-{suffix}{extension}");
+            candidate = Path.Combine(backupDirectory, $"{stem}.pre-regeneration-{timestamp}-{suffix}{extension}");
         return candidate;
     }
 }

@@ -41,12 +41,12 @@ internal sealed class AbyssalEcologiesSaveData : SaveDataCache
         return Task.CompletedTask;
     }
 
-    public ManifestRegenerationResult StageRegeneration(WorldManifest replacement, string confirmation)
+    public ManifestRegenerationResult StageRegeneration(WorldManifest replacement, string confirmation, string durableBackupDirectory)
     {
         if (Manifest == null)
             throw new InvalidOperationException("No active manifest is available to preserve.");
 
-        var result = ManifestRegeneration.Stage(JsonFilePath, Manifest, replacement, confirmation, DateTime.UtcNow);
+        var result = ManifestRegeneration.Stage(JsonFilePath, durableBackupDirectory, Manifest, replacement, confirmation, DateTime.UtcNow);
         Manifest = replacement;
         return result;
     }

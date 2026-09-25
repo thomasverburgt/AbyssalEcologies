@@ -35,7 +35,7 @@ internal static class DiagnosticCommands
 
     [ConsoleCommand("ae_help")]
     public static string Help() =>
-        "Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_boundaries [10-300 seconds]; ae_boundaries_off; ae_validate; ae_perf; ae_regenerate <new-seed> CONFIRM_DISPOSABLE_SAVE_REGENERATION; goto ae1/ae2/ae3.";
+        "Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_boundaries [10-300 seconds]; ae_boundaries_off; ae_validate; ae_perf; ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION; goto ae1/ae2/ae3.";
 
     [ConsoleCommand("ae_manifest")]
     public static string Manifest()
@@ -205,7 +205,7 @@ internal static class DiagnosticCommands
         if (_regenerationHandler == null)
             return "Abyssal Ecologies: manifest regeneration is unavailable.";
         if (seed == int.MinValue || confirmation != ManifestRegeneration.ConfirmationPhrase)
-            return $"AE regeneration refused. This disposable-save operation replaces the layout on next restart. Usage: ae_regenerate <new-seed> {ManifestRegeneration.ConfirmationPhrase}";
+            return $"AE regeneration refused. This disposable-save operation replaces the layout on next restart. Usage: ae_regenerate NEW_SEED {ManifestRegeneration.ConfirmationPhrase}";
 
         return _regenerationHandler(seed, confirmation);
     }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using AbyssalEcologies.Core;
 using BepInEx;
@@ -16,7 +17,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string Guid = "rocks.verburgt.subnautica.abyssalecologies";
     public const string Name = "Abyssal Ecologies";
-    public const string Version = "0.7.0";
+    public const string Version = "0.7.1";
 
     internal static ManualLogSource Log { get; private set; } = null!;
 
@@ -165,9 +166,10 @@ public sealed class Plugin : BaseUnityPlugin
             };
             var world = new ProceduralWorldGenerator().Generate(settings);
             var replacement = WorldManifest.FromGeneratedWorld(world, terrainResolved: false);
-            var result = _saveData.StageRegeneration(replacement, confirmation);
+            var backupDirectory = Path.Combine(Paths.ConfigPath, "AbyssalEcologies", "manifest-backups");
+            var result = _saveData.StageRegeneration(replacement, confirmation, backupDirectory);
             _regenerationStaged = true;
-            var message = $"AE regeneration STAGED for seed {result.Seed}: {result.RegionCount} regions, {result.PlacementCount} placements. Current session remains unchanged. Backup: {result.BackupPath}. Save if needed, quit fully, and restart Subnautica to activate the replacement manifest.";
+            var message = $"AE regeneration STAGED for seed {result.Seed}: {result.RegionCount} regions, {result.PlacementCount} placements. Current session remains unchanged. Durable backup: {result.BackupPath}. Save the game now, quit fully, and restart Subnautica to activate the replacement manifest.";
             Logger.LogWarning(message);
             return message;
         }
