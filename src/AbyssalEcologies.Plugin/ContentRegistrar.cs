@@ -13,10 +13,22 @@ namespace AbyssalEcologies.Plugin;
 internal static class ContentRegistrar
 {
     private const int InstanceLogLimitPerContent = 3;
+    private const float LandmarkProbeHeight = 60f;
+    private const float LandmarkProbeDistance = 320f;
+    private const float LandmarkSurfaceOffset = 0.35f;
+    private const float MaximumLandmarkSlope = 50f;
+    private const float MaximumLandmarkAdjustment = 260f;
+    private static readonly HashSet<string> LandmarkContentIds = new(StringComparer.Ordinal)
+    {
+        "glass-arch",
+        "thermal-spire",
+        "nursery-heart"
+    };
     private static readonly Dictionary<string, TechType> RegisteredTechTypes = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, int> LoggedInstanceCounts = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, int> InstantiationCounts = new(StringComparer.Ordinal);
     private static readonly List<WeakReference> LiveInstances = new();
+    private static readonly Dictionary<string, LandmarkGroundingResult> LandmarkGroundingResults = new(StringComparer.Ordinal);
     private static int _registeredPlacementCount;
 
     private static readonly ContentDefinition[] Definitions =
@@ -55,6 +67,7 @@ internal static class ContentRegistrar
         LoggedInstanceCounts.Clear();
         InstantiationCounts.Clear();
         LiveInstances.Clear();
+        LandmarkGroundingResults.Clear();
         _registeredPlacementCount = 0;
 
         var placementsByContent = world.Regions
@@ -108,6 +121,16 @@ internal static class ContentRegistrar
             InstantiationCounts.Values.Sum(),
             activeCount,
             new Dictionary<string, int>(InstantiationCounts, StringComparer.Ordinal));
+    }
+
+    public static LandmarkGroundingMetrics GetLandmarkGroundingMetrics()
+    {
+        var results = new Dictionary<string, LandmarkGroundingResult>(LandmarkGroundingResults, StringComparer.Ordinal);
+        return new LandmarkGroundingMetrics(
+            results.Count,
+            results.Values.Count(result => result.Grounded),
+            results.Values.Count(result => !result.Grounded),
+            results);
     }
 
     private static void RegisterDefinition(ContentDefinition definition, TechType sourceTechType)
@@ -165,6 +188,9 @@ internal static class ContentRegistrar
 
     private static void LogSuccessfulInstance(string contentId, GameObject gameObject)
     {
+        if (LandmarkContentIds.Contains(contentId))
+            GroundLandmark(contentId, gameObject);
+
         InstantiationCounts.TryGetValue(contentId, out var totalCount);
         InstantiationCounts[contentId] = totalCount + 1;
         LiveInstances.Add(new WeakReference(gameObject));
@@ -175,6 +201,45 @@ internal static class ContentRegistrar
 
         LoggedInstanceCounts[contentId] = count + 1;
         Plugin.Log.LogInfo($"Instantiated '{contentId}' at {gameObject.transform.position} (sample {count + 1}/{InstanceLogLimitPerContent}).");
+    }
+
+    private static void GroundLandmark(string contentId, GameObject gameObject)
+    {
+        var original = gameObject.transform.position;
+        var origin = original + (Vector3.up * LandmarkProbeHeight);
+        if (!Physics.Raycast(origin, Vector3.down, out var hit, LandmarkProbeDistance, Voxeland.GetTerrainLayerMask(), QueryTriggerInteraction.Ignore))
+        {
+            RecordGrounding(contentId, false, 0f, "no loaded terrain surface was found beneath the instance");
+            return;
+        }
+
+        var slope = Vector3.Angle(hit.normal, Vector3.up);
+        if (slope > MaximumLandmarkSlope)
+        {
+            RecordGrounding(contentId, false, 0f, $"terrain slope {slope:0.0} exceeds {MaximumLandmarkSlope:0} degrees");
+            return;
+        }
+
+        var groundedY = hit.point.y + LandmarkSurfaceOffset;
+        var adjustment = groundedY - original.y;
+        if (Mathf.Abs(adjustment) > MaximumLandmarkAdjustment)
+        {
+            RecordGrounding(contentId, false, adjustment, $"required vertical adjustment {adjustment:+0.0;-0.0;0.0} m exceeds {MaximumLandmarkAdjustment:0} m");
+            return;
+        }
+
+        gameObject.transform.position = new Vector3(original.x, groundedY, original.z);
+        RecordGrounding(contentId, true, adjustment, $"grounded on loaded terrain with slope {slope:0.0} degrees");
+    }
+
+    private static void RecordGrounding(string contentId, bool grounded, float adjustment, string detail)
+    {
+        var result = new LandmarkGroundingResult(grounded, adjustment, detail);
+        LandmarkGroundingResults[contentId] = result;
+        if (grounded)
+            Plugin.Log.LogInfo($"Grounded landmark '{contentId}' by {adjustment:+0.0;-0.0;0.0} m: {detail}.");
+        else
+            Plugin.Log.LogWarning($"Landmark grounding failed for '{contentId}': {detail}; leaving its manifest position unchanged.");
     }
 
     internal sealed class SpawnRegistrationMetrics
@@ -203,6 +268,36 @@ internal static class ContentRegistrar
         public int InstantiationCallbacks { get; }
         public int ActiveInstanceCount { get; }
         public IReadOnlyDictionary<string, int> InstantiationCounts { get; }
+    }
+
+    internal sealed class LandmarkGroundingMetrics
+    {
+        public LandmarkGroundingMetrics(int attemptedCount, int groundedCount, int failedCount, IReadOnlyDictionary<string, LandmarkGroundingResult> results)
+        {
+            AttemptedCount = attemptedCount;
+            GroundedCount = groundedCount;
+            FailedCount = failedCount;
+            Results = results;
+        }
+
+        public int AttemptedCount { get; }
+        public int GroundedCount { get; }
+        public int FailedCount { get; }
+        public IReadOnlyDictionary<string, LandmarkGroundingResult> Results { get; }
+    }
+
+    internal sealed class LandmarkGroundingResult
+    {
+        public LandmarkGroundingResult(bool grounded, float verticalAdjustment, string detail)
+        {
+            Grounded = grounded;
+            VerticalAdjustment = verticalAdjustment;
+            Detail = detail;
+        }
+
+        public bool Grounded { get; }
+        public float VerticalAdjustment { get; }
+        public string Detail { get; }
     }
 
     private sealed class ContentDefinition

@@ -35,7 +35,7 @@ internal static class DiagnosticCommands
 
     [ConsoleCommand("ae_help")]
     public static string Help() =>
-        "Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_boundaries [10-300 seconds]; ae_boundaries_off; ae_validate; ae_perf; ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION; goto ae1/ae2/ae3.";
+        "Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_boundaries [10-300 seconds]; ae_boundaries_off; ae_validate; ae_perf; ae_grounding; ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION; goto ae1/ae2/ae3.";
 
     [ConsoleCommand("ae_manifest")]
     public static string Manifest()
@@ -164,6 +164,29 @@ internal static class DiagnosticCommands
             Plugin.Log.LogInfo(result);
         else
             Plugin.Log.LogError(result);
+        return result;
+    }
+
+    [ConsoleCommand("ae_grounding")]
+    public static string Grounding()
+    {
+        if (_world == null)
+            return "Abyssal Ecologies: no save manifest is active. Load a save first.";
+
+        var metrics = ContentRegistrar.GetLandmarkGroundingMetrics();
+        var builder = new StringBuilder();
+        builder.Append($"AE landmark grounding: attempted={metrics.AttemptedCount}/3, grounded={metrics.GroundedCount}, failed={metrics.FailedCount}.");
+        foreach (var pair in metrics.Results.OrderBy(pair => pair.Key))
+        {
+            builder.AppendLine();
+            builder.Append($"{pair.Key}: {(pair.Value.Grounded ? "GROUNDED" : "FAILED")}, verticalAdjustment={pair.Value.VerticalAdjustment:+0.0;-0.0;0.0}m, {pair.Value.Detail}.");
+        }
+
+        var result = builder.ToString();
+        if (metrics.FailedCount == 0)
+            Plugin.Log.LogInfo(result);
+        else
+            Plugin.Log.LogWarning(result);
         return result;
     }
 

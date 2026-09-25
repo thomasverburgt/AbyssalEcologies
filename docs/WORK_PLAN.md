@@ -21,7 +21,7 @@ The repository currently provides:
 - a guarded Windows launcher for a copied test installation; and
 - automated checks for determinism, seed variation, placement counts, exclusion from the starting radius, depth bounds, and inter-region separation.
 
-The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, coordinate-preserving schema migration, byte-stable schema-3 round trips, incompatible-schema rejection, world diagnostics, performance-budget pass/fail behavior, and guarded manifest regeneration. Version 0.5.1 passed its migration/save/restart field test with the same seed and all 123 placements. Version 0.6.0 passed its bounded late-setup, registration, managed-memory, placement-count, instantiation-callback, live-object, unload, and full-restart field test. Version 0.7.0's boundaries passed, but its sidecar backup was discarded when Subnautica promoted TempSave. Version 0.7.1 passed the corrected durable-backup, required-save, restart activation, validation, performance, regenerated-content, and temporary-removal recovery checks. Terrain-aware placement remains unresolved because both forced remote batch-loading paths destabilized Subnautica's late load phase.
+The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, coordinate-preserving schema migration, byte-stable schema-3 round trips, incompatible-schema rejection, world diagnostics, performance-budget pass/fail behavior, and guarded manifest regeneration. Version 0.5.1 passed its migration/save/restart field test with the same seed and all 123 placements. Version 0.6.0 passed its bounded late-setup, registration, managed-memory, placement-count, instantiation-callback, live-object, unload, and full-restart field test. Version 0.7.0's boundaries passed, but its sidecar backup was discarded when Subnautica promoted TempSave. Version 0.7.1 passed the corrected durable-backup, required-save, restart activation, validation, performance, regenerated-content, and temporary-removal recovery checks. Seed 58 passed flora, fauna, collision, and escape-path inspection but failed because every landmark floated. Version 0.8.0 adds bounded local landmark grounding without remote terrain streaming; field validation is pending.
 
 ## Active milestone: terrain-aware save manifests
 
@@ -38,6 +38,7 @@ This is the critical path. Original art and expanded content remain blocked unti
 | Done | Performance budget | Stream regions without persistent whole-map objects | `ae_perf` passed load, AE1/AE2 streaming, unload, and full-restart checks on 2026-09-25; 123/123 placements remained registered |
 | Done | Disposable regeneration and boundaries | Visualize region extents and safely stage a new deterministic layout | 0.7.1 passed refusal/no-write, temporary visualization, exact durable backup, save promotion, restart activation, validation, performance, and regenerated-content checks on 2026-09-25 |
 | Done with limitation | Temporary removal and recovery | Prove a backed-up vanilla save can load without the mod and recover after restoration | Save loaded and content returned byte-identically after DLL restoration on 2026-09-25; mod-absent loads emit missing-prefab errors, must not be saved, and permanent uninstall remains unsupported |
+| In test | Local landmark grounding | Ground central landmarks only after their cells naturally stream | Seed-58 baseline found three floating landmarks; 0.8.0 performs bounded downward terrain raycasts at instance creation and reports results through `ae_grounding` |
 
 ### Milestone acceptance gate
 
@@ -92,4 +93,4 @@ Passing automated checks or reaching the main menu is not sufficient evidence of
 
 ## Immediate next increment
 
-Run a bounded representative-seed inspection before leaving Milestone 1. Select layouts that exercise shallow, middle, and deep configured ranges; validate each manifest, visit all three generated regions, and record floating flora, buried landmarks, protected-site interference, and return-path issues. Preserve each tested manifest and do not revive unsafe remote terrain streaming.
+Field-test 0.8.0 against the preserved seed-58 shallow, deep, and middle regions. Confirm all three landmarks report `GROUNDED`, visually contact plausible terrain without burial, remain upright and unobstructed, and preserve safe return paths. Re-run validation and performance diagnostics, then save/restart/revisit to ensure grounding remains stable.
