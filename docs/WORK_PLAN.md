@@ -21,7 +21,7 @@ The repository currently provides:
 - a guarded Windows launcher for a copied test installation; and
 - automated checks for determinism, seed variation, placement counts, exclusion from the starting radius, depth bounds, and inter-region separation.
 
-The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, schema-1 fixture compatibility, byte-stable schema-2 manifest round trips, configuration isolation, rejection of corrupt or future schemas, and the same diagnostics used by the in-game validator. Version 0.3.2 passed in-game testing on 2026-09-24: initial load, all three regions and nine content types, the Thermal Spire, save, full restart, reload, and revisit. Version 0.4.0 adds bounded manifest, region-bound, and placement-validation commands for the next field test. Terrain-aware placement remains unresolved because both forced remote batch-loading paths destabilized Subnautica's late load phase.
+The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, schema-1 fixture compatibility, byte-stable schema-2 manifest round trips, configuration isolation, rejection of corrupt or future schemas, and the same diagnostics used by the in-game validator. Version 0.3.2 passed in-game testing on 2026-09-24: initial load, all three regions and nine content types, the Thermal Spire, save, full restart, reload, and revisit. Version 0.4.0 passed its diagnostic field test on 2026-09-25: `ae_manifest` reported three regions and 123 placements, `ae_validate` reported zero errors, `goto ae1` instantiated the expected landmark/flora/fauna, and `ae_bounds 1` confirmed the player inside the region. Terrain-aware placement remains unresolved because both forced remote batch-loading paths destabilized Subnautica's late load phase.
 
 ## Active milestone: terrain-aware save manifests
 
@@ -33,7 +33,7 @@ This is the critical path. Original art and expanded content remain blocked unti
 | Deferred | Terrain probing | Candidate flora and landmarks snap to valid surfaces; swimming fauna remain in water volumes | Experimental resolver retained; both forced remote batch-loading paths failed live testing and are disabled |
 | Partial | Exclusion volumes | Reject Aurora, lifepods, wrecks, precursor sites, void, map edge, and player structures | Static exclusions are active and the representative layout passed inspection; runtime terrain/object rejection is deferred |
 | Done | Per-save manifest | Persist seed, schema version, regions, placements, and content identifiers | Fixture and round-trip checks plus in-game save/quit/relaunch/reload passed |
-| In test | Developer commands | Print manifest, teleport to region, report bounds, and validate placements | `ae_manifest`, `ae_bounds`, and `ae_validate` build and pass shared-core checks; existing `goto ae1`/`ae2`/`ae3` destinations await the 0.4.0 field test |
+| Done | Developer commands | Print manifest, teleport to region, report bounds, and validate placements | Shared-core checks and the 0.4.0 in-game field test passed on 2026-09-25 |
 | P1 | Migration framework | Refuse incompatible manifests and migrate explicitly supported schemas | Fixture tests cover current, previous, corrupt, and future schema versions |
 | P1 | Performance budget | Stream regions without persistent whole-map objects | Profiling captures frame time, allocations, object count, and unload behavior |
 
