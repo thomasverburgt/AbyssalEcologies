@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using AbyssalEcologies.Core;
@@ -38,5 +39,15 @@ internal sealed class AbyssalEcologiesSaveData : SaveDataCache
             File.Move(temporaryPath, JsonFilePath);
 
         return Task.CompletedTask;
+    }
+
+    public ManifestRegenerationResult StageRegeneration(WorldManifest replacement, string confirmation)
+    {
+        if (Manifest == null)
+            throw new InvalidOperationException("No active manifest is available to preserve.");
+
+        var result = ManifestRegeneration.Stage(JsonFilePath, Manifest, replacement, confirmation, DateTime.UtcNow);
+        Manifest = replacement;
+        return result;
     }
 }

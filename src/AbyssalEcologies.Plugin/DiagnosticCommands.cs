@@ -14,6 +14,7 @@ internal static class DiagnosticCommands
     private static GeneratedWorld? _world;
     private static WorldPerformanceMeasurement? _performance;
     private static int _registeredContentTypeCount;
+    private static Func<int, string, string>? _regenerationHandler;
 
     public static void Register() => ConsoleCommandsHandler.RegisterConsoleCommands(typeof(DiagnosticCommands));
 
@@ -29,9 +30,12 @@ internal static class DiagnosticCommands
         _registeredContentTypeCount = registeredContentTypeCount;
     }
 
+    public static void SetRegenerationHandler(Func<int, string, string> handler) =>
+        _regenerationHandler = handler ?? throw new ArgumentNullException(nameof(handler));
+
     [ConsoleCommand("ae_help")]
     public static string Help() =>
-        "Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_validate; ae_perf; goto ae1/ae2/ae3.";
+        "Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_boundaries [10-300 seconds]; ae_boundaries_off; ae_validate; ae_perf; ae_regenerate <new-seed> CONFIRM_DISPOSABLE_SAVE_REGENERATION; goto ae1/ae2/ae3.";
 
     [ConsoleCommand("ae_manifest")]
     public static string Manifest()
@@ -161,5 +165,48 @@ internal static class DiagnosticCommands
         else
             Plugin.Log.LogError(result);
         return result;
+    }
+
+    [ConsoleCommand("ae_boundaries")]
+    public static string ShowBoundaries(int lifetimeSeconds = BoundaryVisualizer.DefaultLifetimeSeconds)
+    {
+        if (_world == null)
+            return "Abyssal Ecologies: no save manifest is active. Load a save first.";
+
+        try
+        {
+            var count = BoundaryVisualizer.Show(_world, lifetimeSeconds);
+            var result = $"AE boundaries visible for {count} region(s) for {lifetimeSeconds} seconds. Bright rings mark horizontal radii; vertical lines mark centers. Use ae_boundaries_off to remove them early.";
+            Plugin.Log.LogInfo(result);
+            return result;
+        }
+        catch (Exception exception)
+        {
+            var failure = $"AE boundaries failed: {exception.Message}";
+            Plugin.Log.LogError(failure);
+            return failure;
+        }
+    }
+
+    [ConsoleCommand("ae_boundaries_off")]
+    public static string HideBoundaries()
+    {
+        var hidden = BoundaryVisualizer.Hide();
+        var result = hidden ? "AE boundaries removed." : "AE boundaries were not active.";
+        Plugin.Log.LogInfo(result);
+        return result;
+    }
+
+    [ConsoleCommand("ae_regenerate")]
+    public static string Regenerate(int seed = int.MinValue, string confirmation = "")
+    {
+        if (_manifest == null || _world == null)
+            return "Abyssal Ecologies: no save manifest is active. Load a save first.";
+        if (_regenerationHandler == null)
+            return "Abyssal Ecologies: manifest regeneration is unavailable.";
+        if (seed == int.MinValue || confirmation != ManifestRegeneration.ConfirmationPhrase)
+            return $"AE regeneration refused. This disposable-save operation replaces the layout on next restart. Usage: ae_regenerate <new-seed> {ManifestRegeneration.ConfirmationPhrase}";
+
+        return _regenerationHandler(seed, confirmation);
     }
 }

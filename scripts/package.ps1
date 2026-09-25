@@ -8,7 +8,7 @@ $output = Join-Path $repositoryRoot 'src\AbyssalEcologies.Plugin\bin\Release\net
 $artifactRoot = Join-Path $repositoryRoot 'artifacts'
 $stage = Join-Path $artifactRoot 'package'
 $pluginStage = Join-Path $stage 'BepInEx\plugins\AbyssalEcologies'
-$archive = Join-Path $artifactRoot 'AbyssalEcologies-0.6.0.zip'
+$archive = Join-Path $artifactRoot 'AbyssalEcologies-0.7.0.zip'
 
 dotnet restore $solution
 if ($LASTEXITCODE -ne 0) { throw 'Restore failed.' }

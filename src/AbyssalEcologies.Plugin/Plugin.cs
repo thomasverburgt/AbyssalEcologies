@@ -16,13 +16,14 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string Guid = "rocks.verburgt.subnautica.abyssalecologies";
     public const string Name = "Abyssal Ecologies";
-    public const string Version = "0.6.0";
+    public const string Version = "0.7.0";
 
     internal static ManualLogSource Log { get; private set; } = null!;
 
     private GenerationSettings _settings = null!;
     private AbyssalEcologiesSaveData _saveData = null!;
     private bool _worldRegistered;
+    private bool _regenerationStaged;
     private string? _activeManifestJson;
 
     private void Awake()
@@ -35,6 +36,7 @@ public sealed class Plugin : BaseUnityPlugin
             _saveData = SaveDataHandler.RegisterSaveDataCache<AbyssalEcologiesSaveData>();
             var definitionCount = ContentRegistrar.RegisterDefinitions();
             DiagnosticCommands.Register();
+            DiagnosticCommands.SetRegenerationHandler(StageRegeneration);
             WaitScreenHandler.RegisterLateAsyncLoadTask(Name, OnWorldReady, "Preparing manifest-backed micro-biomes");
 
             Logger.LogInfo($"{Name} {Version} registered {definitionCount} content definitions. World generation is waiting for a loaded save.");
@@ -140,5 +142,40 @@ public sealed class Plugin : BaseUnityPlugin
             MaximumDepth = maximumDepth.Value,
             MinimumRegionSeparation = separation.Value
         };
+    }
+
+    private string StageRegeneration(int seed, string confirmation)
+    {
+        if (!_worldRegistered || _saveData.Manifest == null)
+            return "AE regeneration refused: load a save and wait for its manifest to finish registering first.";
+        if (_regenerationStaged)
+            return "AE regeneration refused: a replacement manifest is already staged. Restart Subnautica to activate it.";
+
+        try
+        {
+            var settings = new GenerationSettings
+            {
+                Seed = seed,
+                RegionCount = _settings.RegionCount,
+                MinimumMapRadius = _settings.MinimumMapRadius,
+                MaximumMapRadius = _settings.MaximumMapRadius,
+                MinimumDepth = _settings.MinimumDepth,
+                MaximumDepth = _settings.MaximumDepth,
+                MinimumRegionSeparation = _settings.MinimumRegionSeparation
+            };
+            var world = new ProceduralWorldGenerator().Generate(settings);
+            var replacement = WorldManifest.FromGeneratedWorld(world, terrainResolved: false);
+            var result = _saveData.StageRegeneration(replacement, confirmation);
+            _regenerationStaged = true;
+            var message = $"AE regeneration STAGED for seed {result.Seed}: {result.RegionCount} regions, {result.PlacementCount} placements. Current session remains unchanged. Backup: {result.BackupPath}. Save if needed, quit fully, and restart Subnautica to activate the replacement manifest.";
+            Logger.LogWarning(message);
+            return message;
+        }
+        catch (Exception exception)
+        {
+            var failure = $"AE regeneration refused or failed: {exception.Message}";
+            Logger.LogError(failure);
+            return failure;
+        }
     }
 }

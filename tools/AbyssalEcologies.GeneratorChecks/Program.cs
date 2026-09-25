@@ -20,6 +20,9 @@ Check("corrupt manifest is rejected", CorruptManifestIsRejected);
 Check("unsupported old manifest schema is rejected", UnsupportedOldManifestSchemaIsRejected);
 Check("contradictory legacy manifest is rejected", ContradictoryLegacyManifestIsRejected);
 Check("future manifest schema is rejected", FutureManifestSchemaIsRejected);
+Check("manifest regeneration requires exact confirmation", ManifestRegenerationRequiresExactConfirmation);
+Check("manifest regeneration preserves and replaces atomically", ManifestRegenerationPreservesAndReplacesAtomically);
+Check("manifest regeneration rejects a no-op", ManifestRegenerationRejectsNoOp);
 Check("world diagnostics accept generated layouts", WorldDiagnosticsAcceptGeneratedLayouts);
 Check("world diagnostics reject invalid layouts", WorldDiagnosticsRejectInvalidLayouts);
 Check("world diagnostics preserve legacy exclusion findings as warnings", WorldDiagnosticsPreserveLegacyExclusionWarnings);
@@ -214,6 +217,78 @@ static void FutureManifestSchemaIsRejected()
     var manifest = WorldManifest.FromGeneratedWorld(new ProceduralWorldGenerator().Generate(new GenerationSettings()), terrainResolved: true);
     manifest.SchemaVersion = WorldManifest.CurrentSchemaVersion + 1;
     RequireThrows(manifest.Validate, "future schema was accepted");
+}
+
+static void ManifestRegenerationRequiresExactConfirmation()
+{
+    var generator = new ProceduralWorldGenerator();
+    var current = WorldManifest.FromGeneratedWorld(generator.Generate(new GenerationSettings { Seed = 100 }), terrainResolved: false);
+    var replacement = WorldManifest.FromGeneratedWorld(generator.Generate(new GenerationSettings { Seed = 101 }), terrainResolved: false);
+    var directory = Path.Combine(Path.GetTempPath(), "AbyssalEcologies-check-" + Guid.NewGuid().ToString("N"));
+    var path = Path.Combine(directory, "AbyssalEcologies.json");
+    try
+    {
+        RequireThrows(
+            () => ManifestRegeneration.Stage(path, current, replacement, "wrong", DateTime.UtcNow),
+            "regeneration accepted an incorrect confirmation phrase");
+        Require(!File.Exists(path), "refused regeneration wrote a manifest");
+        Require(!Directory.Exists(directory), "refused regeneration created a save-data directory");
+    }
+    finally
+    {
+        if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+    }
+}
+
+static void ManifestRegenerationPreservesAndReplacesAtomically()
+{
+    var generator = new ProceduralWorldGenerator();
+    var current = WorldManifest.FromGeneratedWorld(generator.Generate(new GenerationSettings { Seed = 200 }), terrainResolved: false);
+    var replacement = WorldManifest.FromGeneratedWorld(generator.Generate(new GenerationSettings { Seed = 201 }), terrainResolved: false);
+    var currentJson = WorldManifestSerializer.Serialize(current);
+    var replacementJson = WorldManifestSerializer.Serialize(replacement);
+    var directory = Path.Combine(Path.GetTempPath(), "AbyssalEcologies-check-" + Guid.NewGuid().ToString("N"));
+    var path = Path.Combine(directory, "AbyssalEcologies.json");
+    Directory.CreateDirectory(directory);
+    File.WriteAllText(path, currentJson);
+    try
+    {
+        var result = ManifestRegeneration.Stage(
+            path,
+            current,
+            replacement,
+            ManifestRegeneration.ConfirmationPhrase,
+            new DateTime(2026, 9, 25, 12, 34, 56, DateTimeKind.Utc));
+
+        Require(File.ReadAllText(result.BackupPath) == currentJson, "regeneration backup did not preserve the prior manifest bytes");
+        Require(File.ReadAllText(path) == replacementJson, "regeneration did not install the replacement manifest");
+        Require(result.Seed == 201 && result.RegionCount == 3 && result.PlacementCount == 123, "regeneration result reported incorrect replacement metadata");
+        Require(!File.Exists(path + ".regeneration.tmp"), "regeneration left its temporary file behind");
+    }
+    finally
+    {
+        if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+    }
+}
+
+static void ManifestRegenerationRejectsNoOp()
+{
+    var manifest = WorldManifest.FromGeneratedWorld(
+        new ProceduralWorldGenerator().Generate(new GenerationSettings { Seed = 300 }),
+        terrainResolved: false);
+    var directory = Path.Combine(Path.GetTempPath(), "AbyssalEcologies-check-" + Guid.NewGuid().ToString("N"));
+    var path = Path.Combine(directory, "AbyssalEcologies.json");
+    try
+    {
+        RequireThrows(
+            () => ManifestRegeneration.Stage(path, manifest, manifest, ManifestRegeneration.ConfirmationPhrase, DateTime.UtcNow),
+            "regeneration accepted an identical replacement manifest");
+        Require(!File.Exists(path), "no-op regeneration wrote a manifest");
+    }
+    finally
+    {
+        if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+    }
 }
 
 static void WorldDiagnosticsAcceptGeneratedLayouts()

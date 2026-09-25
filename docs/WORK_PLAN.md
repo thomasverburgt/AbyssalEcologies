@@ -21,7 +21,7 @@ The repository currently provides:
 - a guarded Windows launcher for a copied test installation; and
 - automated checks for determinism, seed variation, placement counts, exclusion from the starting radius, depth bounds, and inter-region separation.
 
-The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, coordinate-preserving schema migration, byte-stable schema-3 round trips, incompatible-schema rejection, world diagnostics, and performance-budget pass/fail behavior. Version 0.5.1 passed its migration/save/restart field test with the same seed and all 123 placements. Version 0.6.0 passed its bounded late-setup, registration, managed-memory, placement-count, instantiation-callback, live-object, unload, and full-restart field test. Terrain-aware placement remains unresolved because both forced remote batch-loading paths destabilized Subnautica's late load phase.
+The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, coordinate-preserving schema migration, byte-stable schema-3 round trips, incompatible-schema rejection, world diagnostics, performance-budget pass/fail behavior, and guarded manifest regeneration. Version 0.5.1 passed its migration/save/restart field test with the same seed and all 123 placements. Version 0.6.0 passed its bounded late-setup, registration, managed-memory, placement-count, instantiation-callback, live-object, unload, and full-restart field test. Version 0.7.0 adds temporary region-boundary lines and restart-only backup-first regeneration; field validation is pending. Terrain-aware placement remains unresolved because both forced remote batch-loading paths destabilized Subnautica's late load phase.
 
 ## Active milestone: terrain-aware save manifests
 
@@ -36,6 +36,7 @@ This is the critical path. Original art and expanded content remain blocked unti
 | Done | Developer commands | Print manifest, teleport to region, report bounds, and validate placements | Shared-core checks and the 0.4.0 in-game field test passed on 2026-09-25 |
 | Done | Migration framework | Refuse incompatible manifests and migrate explicitly supported schemas | Offline fixtures pass; schema 1 to schema 3 save/restart field migration passed without coordinate drift on 2026-09-25 |
 | Done | Performance budget | Stream regions without persistent whole-map objects | `ae_perf` passed load, AE1/AE2 streaming, unload, and full-restart checks on 2026-09-25; 123/123 placements remained registered |
+| In test | Disposable regeneration and boundaries | Visualize region extents and safely stage a new deterministic layout | Exact confirmation, a different seed, timestamped byte-preserving backup, atomic replacement, restart-only activation, and temporary non-colliding lines implemented in 0.7.0 |
 
 ### Milestone acceptance gate
 
@@ -90,4 +91,4 @@ Passing automated checks or reaching the main menu is not sufficient evidence of
 
 ## Immediate next increment
 
-Add explicitly guarded manifest regeneration for disposable saves and temporary in-world region-boundary visualization. Regeneration must require an unmistakable confirmation token, must never overwrite a manifest silently, and must preserve a recoverable copy of the previous manifest.
+Field-test 0.7.0 on the isolated disposable save: verify boundaries appear and can be removed, verify an unconfirmed regeneration is refused without disk changes, stage seed 451231 with the exact confirmation, verify the backup matches the prior manifest, fully restart, and confirm `ae_manifest` reports seed 451231 with 123 placements and `ae_validate` passes.
