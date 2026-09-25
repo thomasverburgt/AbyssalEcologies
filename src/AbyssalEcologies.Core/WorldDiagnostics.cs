@@ -6,33 +6,36 @@ namespace AbyssalEcologies.Core;
 
 public sealed class WorldValidationReport
 {
-    internal WorldValidationReport(int regionCount, int placementCount, IReadOnlyList<string> errors)
+    internal WorldValidationReport(int regionCount, int placementCount, IReadOnlyList<string> errors, IReadOnlyList<string> warnings)
     {
         RegionCount = regionCount;
         PlacementCount = placementCount;
         Errors = errors;
+        Warnings = warnings;
     }
 
     public int RegionCount { get; }
     public int PlacementCount { get; }
     public IReadOnlyList<string> Errors { get; }
+    public IReadOnlyList<string> Warnings { get; }
     public bool IsValid => Errors.Count == 0;
 }
 
 public static class WorldDiagnostics
 {
-    public static WorldValidationReport Validate(GeneratedWorld world)
+    public static WorldValidationReport Validate(GeneratedWorld world, bool enforceCurrentExclusions = true)
     {
         if (world == null) throw new ArgumentNullException(nameof(world));
 
         var errors = new List<string>();
+        var warnings = new List<string>();
         var placementCount = 0;
 
         var regions = world.Regions;
         if (regions == null)
         {
             errors.Add("World contains no regions.");
-            return new WorldValidationReport(0, 0, errors);
+            return new WorldValidationReport(0, 0, errors, warnings);
         }
         if (regions.Count == 0)
             errors.Add("World contains no regions.");
@@ -53,7 +56,7 @@ public static class WorldDiagnostics
             if (!IsFinite(region.Center) || !IsFinite(region.Radius) || region.Radius <= 0f)
                 errors.Add($"{label} has invalid center or radius values.");
             if (WorldProtectionCatalog.TryFindExclusion(region.Center, 140f, out var centerArea))
-                errors.Add($"{label} center enters protected area '{centerArea}'.");
+                AddExclusionFinding($"{label} center enters protected area '{centerArea}'.", enforceCurrentExclusions, errors, warnings);
             if (region.Placements == null || region.Placements.Count == 0)
             {
                 errors.Add($"{label} contains no placements.");
@@ -87,11 +90,19 @@ public static class WorldDiagnostics
 
                 var clearance = placement.Kind == PlacementKind.Landmark ? 35f : 8f;
                 if (WorldProtectionCatalog.TryFindExclusion(placement.Position, clearance, out var placementArea))
-                    errors.Add($"{placementLabel} enters protected area '{placementArea}'.");
+                    AddExclusionFinding($"{placementLabel} enters protected area '{placementArea}'.", enforceCurrentExclusions, errors, warnings);
             }
         }
 
-        return new WorldValidationReport(regions.Count, placementCount, errors);
+        return new WorldValidationReport(regions.Count, placementCount, errors, warnings);
+    }
+
+    private static void AddExclusionFinding(string message, bool enforceCurrentExclusions, ICollection<string> errors, ICollection<string> warnings)
+    {
+        if (enforceCurrentExclusions)
+            errors.Add(message);
+        else
+            warnings.Add(message);
     }
 
     private static bool IsFinite(WorldPoint point) => IsFinite(point.X) && IsFinite(point.Y) && IsFinite(point.Z);

@@ -22,6 +22,7 @@ Check("contradictory legacy manifest is rejected", ContradictoryLegacyManifestIs
 Check("future manifest schema is rejected", FutureManifestSchemaIsRejected);
 Check("world diagnostics accept generated layouts", WorldDiagnosticsAcceptGeneratedLayouts);
 Check("world diagnostics reject invalid layouts", WorldDiagnosticsRejectInvalidLayouts);
+Check("world diagnostics preserve legacy exclusion findings as warnings", WorldDiagnosticsPreserveLegacyExclusionWarnings);
 
 if (failures.Count > 0)
 {
@@ -149,6 +150,7 @@ static void SchemaOneFixtureMigratesWithoutLayoutDrift()
     Require(manifest.SourceSchemaVersion == 1 && manifest.WasMigrated, "schema 1 migration was not recorded");
     Require(manifest.SchemaVersion == WorldManifest.CurrentSchemaVersion, "schema 1 did not migrate to the current schema");
     Require(manifest.PlacementMode == WorldManifest.DeterministicPlacementMode && !manifest.TerrainResolved, "schema 1 migration chose the wrong placement mode");
+    Require(manifest.ExclusionCatalogVersion == 0, "schema 1 migration did not preserve its legacy exclusion policy");
     Require(manifest.Regions[0].Placements[0].Position.Y == -5f, "schema 1 migration changed placement coordinates");
 }
 
@@ -161,6 +163,7 @@ static void SchemaTwoFixtureMigratesWithoutLayoutDrift()
     Require(manifest.SchemaVersion == WorldManifest.CurrentSchemaVersion, "schema 2 did not migrate to the current schema");
     Require(manifest.TerrainResolved, "schema 2 fixture lost terrain resolution state");
     Require(manifest.PlacementMode == WorldManifest.TerrainResolvedPlacementMode, "schema 2 migration chose the wrong placement mode");
+    Require(manifest.ExclusionCatalogVersion == 0, "schema 2 migration did not preserve its legacy exclusion policy");
     Require(manifest.Regions[0].Placements[0].Position.Y == -205f, "schema 2 fixture placement changed");
 }
 
@@ -172,6 +175,7 @@ static void SchemaThreeFixtureLoadsWithoutDrift()
 
     Require(manifest.SourceSchemaVersion == 3 && !manifest.WasMigrated, "schema 3 fixture was treated as migrated");
     Require(manifest.PlacementMode == WorldManifest.DeterministicPlacementMode, "schema 3 fixture placement mode changed");
+    Require(manifest.ExclusionCatalogVersion == WorldManifest.CurrentExclusionCatalogVersion, "schema 3 exclusion catalog changed");
     Require(WorldManifestSerializer.Serialize(manifest) == fixture, "schema 3 fixture did not serialize byte-equivalently");
 }
 
@@ -230,6 +234,24 @@ static void WorldDiagnosticsRejectInvalidLayouts()
     var report = WorldDiagnostics.Validate(new GeneratedWorld(1, new[] { invalidRegion }));
     Require(!report.IsValid, "diagnostics accepted an invalid layout");
     Require(report.Errors.Count >= 2, "diagnostics did not report bounded invariant failures");
+}
+
+static void WorldDiagnosticsPreserveLegacyExclusionWarnings()
+{
+    var center = new WorldPoint(-1120f, -250f, -685f);
+    var placements = new List<GeneratedPlacement>
+    {
+        new("legacy-landmark", PlacementKind.Landmark, center, new WorldPoint(), 1f)
+    };
+    for (var index = 1; index < 41; index++)
+        placements.Add(new GeneratedPlacement("legacy-content", PlacementKind.Flora, center, new WorldPoint(), 1f));
+    var world = new GeneratedWorld(1, new[] { new GeneratedRegion("legacy", "Legacy Region", center, 100f, placements) });
+
+    var currentPolicy = WorldDiagnostics.Validate(world, enforceCurrentExclusions: true);
+    var legacyPolicy = WorldDiagnostics.Validate(world, enforceCurrentExclusions: false);
+    Require(!currentPolicy.IsValid, "current exclusion policy accepted a protected layout");
+    Require(legacyPolicy.IsValid, "legacy exclusion policy converted compatibility findings into errors");
+    Require(legacyPolicy.Warnings.Count > 0, "legacy exclusion policy did not report warnings");
 }
 
 static IReadOnlyList<string> Flatten(GeneratedWorld world) => world.Regions

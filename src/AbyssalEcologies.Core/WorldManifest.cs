@@ -14,6 +14,7 @@ public sealed class WorldManifest
     public const int CurrentSchemaVersion = 3;
     public const int OldestSupportedSchemaVersion = 1;
     public const int CurrentGeneratorVersion = 1;
+    public const int CurrentExclusionCatalogVersion = 1;
     public const string DeterministicPlacementMode = "deterministic";
     public const string TerrainResolvedPlacementMode = "terrain-resolved";
 
@@ -32,7 +33,10 @@ public sealed class WorldManifest
     [DataMember(Name = "placementMode", Order = 5)]
     public string PlacementMode { get; set; } = string.Empty;
 
-    [DataMember(Name = "terrainResolved", Order = 6, EmitDefaultValue = false)]
+    [DataMember(Name = "exclusionCatalogVersion", Order = 6)]
+    public int ExclusionCatalogVersion { get; set; } = CurrentExclusionCatalogVersion;
+
+    [DataMember(Name = "terrainResolved", Order = 7, EmitDefaultValue = false)]
     public bool TerrainResolved { get; set; }
 
     public int SourceSchemaVersion { get; internal set; } = CurrentSchemaVersion;
@@ -47,6 +51,7 @@ public sealed class WorldManifest
             SchemaVersion = CurrentSchemaVersion,
             Seed = world.Seed,
             PlacementMode = terrainResolved ? TerrainResolvedPlacementMode : DeterministicPlacementMode,
+            ExclusionCatalogVersion = CurrentExclusionCatalogVersion,
             TerrainResolved = terrainResolved,
             Regions = world.Regions.Select(region => new ManifestRegion
             {
@@ -92,6 +97,8 @@ public sealed class WorldManifest
             throw new InvalidDataException($"Unsupported generator version {GeneratorVersion}; expected {CurrentGeneratorVersion}.");
         if (PlacementMode != DeterministicPlacementMode && PlacementMode != TerrainResolvedPlacementMode)
             throw new InvalidDataException($"Unsupported placement mode '{PlacementMode}'.");
+        if (ExclusionCatalogVersion < 0 || ExclusionCatalogVersion > CurrentExclusionCatalogVersion)
+            throw new InvalidDataException($"Unsupported exclusion catalog version {ExclusionCatalogVersion}; supported range is 0-{CurrentExclusionCatalogVersion}.");
         if (TerrainResolved != (PlacementMode == TerrainResolvedPlacementMode))
             throw new InvalidDataException("Manifest placement mode contradicts its terrain-resolution flag.");
         if (Regions == null || Regions.Count == 0)
@@ -222,12 +229,14 @@ public static class WorldManifestMigrator
                 if (manifest.TerrainResolved)
                     throw new InvalidDataException("Schema 1 manifests cannot claim terrain-resolved placements.");
                 manifest.PlacementMode = WorldManifest.DeterministicPlacementMode;
+                manifest.ExclusionCatalogVersion = 0;
                 manifest.SchemaVersion = WorldManifest.CurrentSchemaVersion;
                 break;
             case 2:
                 if (!manifest.TerrainResolved)
                     throw new InvalidDataException("Schema 2 manifests must contain terrain-resolved placements.");
                 manifest.PlacementMode = WorldManifest.TerrainResolvedPlacementMode;
+                manifest.ExclusionCatalogVersion = 0;
                 manifest.SchemaVersion = WorldManifest.CurrentSchemaVersion;
                 break;
             case WorldManifest.CurrentSchemaVersion:

@@ -33,7 +33,7 @@ internal static class DiagnosticCommands
 
         var placementCount = _world.Regions.Sum(region => region.Placements.Count);
         var builder = new StringBuilder();
-        builder.Append($"AE manifest: schema={_manifest.SchemaVersion}, sourceSchema={_manifest.SourceSchemaVersion}, migrated={_manifest.WasMigrated}, generator={_manifest.GeneratorVersion}, seed={_world.Seed}, placementMode={_manifest.PlacementMode}, terrainResolved={_manifest.TerrainResolved}, regions={_world.Regions.Count}, placements={placementCount}.");
+        builder.Append($"AE manifest: schema={_manifest.SchemaVersion}, sourceSchema={_manifest.SourceSchemaVersion}, migrated={_manifest.WasMigrated}, generator={_manifest.GeneratorVersion}, seed={_world.Seed}, placementMode={_manifest.PlacementMode}, exclusionCatalog={_manifest.ExclusionCatalogVersion}, terrainResolved={_manifest.TerrainResolved}, regions={_world.Regions.Count}, placements={placementCount}.");
         for (var index = 0; index < _world.Regions.Count; index++)
         {
             var region = _world.Regions[index];
@@ -97,11 +97,19 @@ internal static class DiagnosticCommands
             return manifestFailure;
         }
 
-        var report = WorldDiagnostics.Validate(_world);
+        var enforceCurrentExclusions = _manifest.ExclusionCatalogVersion >= WorldManifest.CurrentExclusionCatalogVersion;
+        var report = WorldDiagnostics.Validate(_world, enforceCurrentExclusions);
         if (report.IsValid)
         {
-            var success = $"AE validation PASS: schema {_manifest.SchemaVersion} ({_manifest.PlacementMode}), seed {_world.Seed}, {report.RegionCount} regions, {report.PlacementCount} placements, zero deterministic/static-exclusion errors.";
+            var legacyWarnings = report.Warnings.Count == 0
+                ? "zero deterministic/static-exclusion errors"
+                : $"zero errors and {report.Warnings.Count} preserved legacy exclusion warning(s)";
+            var success = $"AE validation PASS: schema {_manifest.SchemaVersion} ({_manifest.PlacementMode}, exclusion catalog {_manifest.ExclusionCatalogVersion}), seed {_world.Seed}, {report.RegionCount} regions, {report.PlacementCount} placements, {legacyWarnings}.";
             Plugin.Log.LogInfo(success);
+            foreach (var warning in report.Warnings.Take(8))
+                Plugin.Log.LogWarning($"Preserved legacy layout: {warning}");
+            if (report.Warnings.Count > 8)
+                Plugin.Log.LogWarning($"{report.Warnings.Count - 8} additional preserved legacy exclusion warnings omitted.");
             return success;
         }
 
