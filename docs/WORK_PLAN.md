@@ -21,7 +21,7 @@ The repository currently provides:
 - a guarded Windows launcher for a copied test installation; and
 - automated checks for determinism, seed variation, placement counts, exclusion from the starting radius, depth bounds, and inter-region separation.
 
-The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, coordinate-preserving schema migration, byte-stable schema-3 round trips, incompatible-schema rejection, world diagnostics, and performance-budget pass/fail behavior. Version 0.5.1 passed its migration/save/restart field test with the same seed and all 123 placements. Version 0.6.0 adds bounded late-setup, registration, managed-memory, placement-count, instantiation-callback, and live-object instrumentation; its load/stream/unload/restart field test is pending. Terrain-aware placement remains unresolved because both forced remote batch-loading paths destabilized Subnautica's late load phase.
+The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, coordinate-preserving schema migration, byte-stable schema-3 round trips, incompatible-schema rejection, world diagnostics, and performance-budget pass/fail behavior. Version 0.5.1 passed its migration/save/restart field test with the same seed and all 123 placements. Version 0.6.0 passed its bounded late-setup, registration, managed-memory, placement-count, instantiation-callback, live-object, unload, and full-restart field test. Terrain-aware placement remains unresolved because both forced remote batch-loading paths destabilized Subnautica's late load phase.
 
 ## Active milestone: terrain-aware save manifests
 
@@ -35,7 +35,7 @@ This is the critical path. Original art and expanded content remain blocked unti
 | Done | Per-save manifest | Persist seed, schema version, regions, placements, and content identifiers | Fixture and round-trip checks plus in-game save/quit/relaunch/reload passed |
 | Done | Developer commands | Print manifest, teleport to region, report bounds, and validate placements | Shared-core checks and the 0.4.0 in-game field test passed on 2026-09-25 |
 | Done | Migration framework | Refuse incompatible manifests and migrate explicitly supported schemas | Offline fixtures pass; schema 1 to schema 3 save/restart field migration passed without coordinate drift on 2026-09-25 |
-| In test | Performance budget | Stream regions without persistent whole-map objects | `ae_perf` enforces bounded late setup, registration, memory, and placement count while reporting callbacks and live objects for unload inspection |
+| Done | Performance budget | Stream regions without persistent whole-map objects | `ae_perf` passed load, AE1/AE2 streaming, unload, and full-restart checks on 2026-09-25; 123/123 placements remained registered |
 
 ### Milestone acceptance gate
 
@@ -90,4 +90,4 @@ Passing automated checks or reaching the main menu is not sufficient evidence of
 
 ## Immediate next increment
 
-Load the validated schema-3 save under 0.6.0 and record `ae_perf` at initial load, after `goto ae1`, and after `goto ae2`. Confirm the hard budget passes, registered placements remain 123, content types remain nine, callbacks increase only as regions stream, and the active-object count demonstrates that distant content is not permanently retained. Fully restart and repeat the initial measurement.
+Add explicitly guarded manifest regeneration for disposable saves and temporary in-world region-boundary visualization. Regeneration must require an unmistakable confirmation token, must never overwrite a manifest silently, and must preserve a recoverable copy of the previous manifest.

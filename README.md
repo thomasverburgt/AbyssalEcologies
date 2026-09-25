@@ -14,6 +14,8 @@ Version 0.4.0 passed its diagnostic field test on 2026-09-25: manifest reporting
 
 Version 0.5.1 passed its migration field test on 2026-09-25: the schema-1 save migrated to schema 3 without seed, region, or placement drift; save/restart loaded canonically without a second migration; and 26 post-layout Lifepod 12 exclusion findings remained bounded legacy warnings rather than errors.
 
+Version 0.6.0 passed its performance field test on 2026-09-25. Initial load measured 41.1 ms late setup, 3.5 ms spawn registration, and +1.25 MiB managed memory with all 123 placements registered. Streaming AE1 and AE2 increased callbacks from 41 to 82 while live objects fell from 41 to 38, demonstrating unload behavior. A full restart measured 15.2 ms late setup, 3.0 ms registration, and +0.91 MiB with 123/123 placements.
+
 Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md](docs/WORK_PLAN.md). The longer product sequence is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What is implemented
