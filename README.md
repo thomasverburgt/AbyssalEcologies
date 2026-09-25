@@ -16,6 +16,8 @@ Version 0.5.1 passed its migration field test on 2026-09-25: the schema-1 save m
 
 Version 0.6.0 passed its performance field test on 2026-09-25. Initial load measured 41.1 ms late setup, 3.5 ms spawn registration, and +1.25 MiB managed memory with all 123 placements registered. Streaming AE1 and AE2 increased callbacks from 41 to 82 while live objects fell from 41 to 38, demonstrating unload behavior. A full restart measured 15.2 ms late setup, 3.0 ms registration, and +0.91 MiB with 123/123 placements.
 
+Version 0.7.1 passed its regeneration and boundary field test on 2026-09-25. Temporary rings and center markers appeared and were removed on command; incorrect confirmation left the manifest byte-identical; regeneration created an exact durable backup outside Subnautica's TempSave cache; and save, quit, restart activated seed 451232 with schema 3, 123 placements, zero validation errors, a passing performance budget, and all three AE1 content groups. Version 0.7.0 was not accepted because its TempSave sidecar backup was discarded during save promotion.
+
 Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md](docs/WORK_PLAN.md). The longer product sequence is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What is implemented

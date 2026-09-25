@@ -1,6 +1,6 @@
 # Abyssal Ecologies work plan
 
-Last updated: 2026-09-24
+Last updated: 2026-09-25
 
 ## Objective
 
@@ -21,7 +21,7 @@ The repository currently provides:
 - a guarded Windows launcher for a copied test installation; and
 - automated checks for determinism, seed variation, placement counts, exclusion from the starting radius, depth bounds, and inter-region separation.
 
-The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, coordinate-preserving schema migration, byte-stable schema-3 round trips, incompatible-schema rejection, world diagnostics, performance-budget pass/fail behavior, and guarded manifest regeneration. Version 0.5.1 passed its migration/save/restart field test with the same seed and all 123 placements. Version 0.6.0 passed its bounded late-setup, registration, managed-memory, placement-count, instantiation-callback, live-object, unload, and full-restart field test. Version 0.7.0's boundaries passed, but its sidecar backup was discarded when Subnautica promoted TempSave; 0.7.1 moves backups to a durable BepInEx configuration directory and requires a save before restart. Terrain-aware placement remains unresolved because both forced remote batch-loading paths destabilized Subnautica's late load phase.
+The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, coordinate-preserving schema migration, byte-stable schema-3 round trips, incompatible-schema rejection, world diagnostics, performance-budget pass/fail behavior, and guarded manifest regeneration. Version 0.5.1 passed its migration/save/restart field test with the same seed and all 123 placements. Version 0.6.0 passed its bounded late-setup, registration, managed-memory, placement-count, instantiation-callback, live-object, unload, and full-restart field test. Version 0.7.0's boundaries passed, but its sidecar backup was discarded when Subnautica promoted TempSave. Version 0.7.1 passed the corrected durable-backup, required-save, restart activation, validation, performance, and regenerated-content field checks. Terrain-aware placement remains unresolved because both forced remote batch-loading paths destabilized Subnautica's late load phase.
 
 ## Active milestone: terrain-aware save manifests
 
@@ -36,7 +36,7 @@ This is the critical path. Original art and expanded content remain blocked unti
 | Done | Developer commands | Print manifest, teleport to region, report bounds, and validate placements | Shared-core checks and the 0.4.0 in-game field test passed on 2026-09-25 |
 | Done | Migration framework | Refuse incompatible manifests and migrate explicitly supported schemas | Offline fixtures pass; schema 1 to schema 3 save/restart field migration passed without coordinate drift on 2026-09-25 |
 | Done | Performance budget | Stream regions without persistent whole-map objects | `ae_perf` passed load, AE1/AE2 streaming, unload, and full-restart checks on 2026-09-25; 123/123 placements remained registered |
-| In test | Disposable regeneration and boundaries | Visualize region extents and safely stage a new deterministic layout | Boundaries passed in 0.7.0; durable backup, exact confirmation, atomic replacement, required save, and restart-only activation are pending 0.7.1 field validation |
+| Done | Disposable regeneration and boundaries | Visualize region extents and safely stage a new deterministic layout | 0.7.1 passed refusal/no-write, temporary visualization, exact durable backup, save promotion, restart activation, validation, performance, and regenerated-content checks on 2026-09-25 |
 
 ### Milestone acceptance gate
 
@@ -91,4 +91,4 @@ Passing automated checks or reaching the main menu is not sufficient evidence of
 
 ## Immediate next increment
 
-Field-test 0.7.1 on the isolated disposable save: stage a different seed with the exact confirmation, verify the durable backup remains byte-identical outside TempSave, save and quit, verify both permanent replacement and backup survive, fully restart, and confirm `ae_manifest` reports the new seed with 123 placements and `ae_validate` passes.
+Complete the isolated uninstall/recovery acceptance test. Back up the seed-451232 save, quit fully, quarantine only the Abyssal Ecologies plugin binaries, confirm the vanilla save remains loadable with generated objects absent, then restore the exact 0.7.1 binaries and confirm the same schema-3 manifest, seed, placements, and generated content return unchanged.
