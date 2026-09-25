@@ -12,6 +12,8 @@ internal static class DiagnosticCommands
 {
     private static WorldManifest? _manifest;
     private static GeneratedWorld? _world;
+    private static WorldPerformanceMeasurement? _performance;
+    private static int _registeredContentTypeCount;
 
     public static void Register() => ConsoleCommandsHandler.RegisterConsoleCommands(typeof(DiagnosticCommands));
 
@@ -21,9 +23,15 @@ internal static class DiagnosticCommands
         _world = world ?? throw new ArgumentNullException(nameof(world));
     }
 
+    public static void SetPerformance(WorldPerformanceMeasurement performance, int registeredContentTypeCount)
+    {
+        _performance = performance ?? throw new ArgumentNullException(nameof(performance));
+        _registeredContentTypeCount = registeredContentTypeCount;
+    }
+
     [ConsoleCommand("ae_help")]
     public static string Help() =>
-        "Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_validate; goto ae1/ae2/ae3.";
+        "Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_validate; ae_perf; goto ae1/ae2/ae3.";
 
     [ConsoleCommand("ae_manifest")]
     public static string Manifest()
@@ -118,5 +126,40 @@ internal static class DiagnosticCommands
         var failure = $"AE validation FAIL: {report.Errors.Count} error(s): {boundedErrors}{omitted}.";
         Plugin.Log.LogError(failure);
         return failure;
+    }
+
+    [ConsoleCommand("ae_perf")]
+    public static string Performance()
+    {
+        if (_performance == null)
+            return "Abyssal Ecologies: performance data is unavailable until a save finishes loading.";
+
+        var budget = PerformanceBudget.Evaluate(_performance);
+        var runtime = ContentRegistrar.GetRuntimeMetrics();
+        var status = budget.Passed ? "PASS" : "FAIL";
+        var memoryMiB = _performance.ManagedMemoryDeltaBytes / (1024d * 1024d);
+        var builder = new StringBuilder();
+        builder.Append($"AE performance {status}: lateSetup={_performance.LateSetupMilliseconds:0.0}/{PerformanceBudget.MaximumLateSetupMilliseconds:0}ms, registration={_performance.RegistrationMilliseconds:0.0}/{PerformanceBudget.MaximumRegistrationMilliseconds:0}ms, managedDelta={memoryMiB:+0.00;-0.00;0.00}/{PerformanceBudget.MaximumManagedMemoryDeltaBytes / (1024 * 1024)}MiB, registered={runtime.RegisteredPlacementCount}/{_performance.ExpectedPlacementCount}, contentTypes={_registeredContentTypeCount}, instantiationCallbacks={runtime.InstantiationCallbacks}, activeCustomObjects={runtime.ActiveInstanceCount}.");
+
+        if (runtime.InstantiationCounts.Count > 0)
+        {
+            builder.AppendLine();
+            builder.Append("Callbacks by content: ");
+            builder.Append(string.Join(", ", runtime.InstantiationCounts.OrderBy(pair => pair.Key).Select(pair => $"{pair.Key}={pair.Value}")));
+            builder.Append('.');
+        }
+
+        if (!budget.Passed)
+        {
+            builder.AppendLine();
+            builder.Append(string.Join(" | ", budget.Failures));
+        }
+
+        var result = builder.ToString();
+        if (budget.Passed)
+            Plugin.Log.LogInfo(result);
+        else
+            Plugin.Log.LogError(result);
+        return result;
     }
 }

@@ -23,6 +23,8 @@ Check("future manifest schema is rejected", FutureManifestSchemaIsRejected);
 Check("world diagnostics accept generated layouts", WorldDiagnosticsAcceptGeneratedLayouts);
 Check("world diagnostics reject invalid layouts", WorldDiagnosticsRejectInvalidLayouts);
 Check("world diagnostics preserve legacy exclusion findings as warnings", WorldDiagnosticsPreserveLegacyExclusionWarnings);
+Check("performance budget accepts bounded measurements", PerformanceBudgetAcceptsBoundedMeasurements);
+Check("performance budget rejects overruns and count drift", PerformanceBudgetRejectsOverrunsAndCountDrift);
 
 if (failures.Count > 0)
 {
@@ -252,6 +254,26 @@ static void WorldDiagnosticsPreserveLegacyExclusionWarnings()
     Require(!currentPolicy.IsValid, "current exclusion policy accepted a protected layout");
     Require(legacyPolicy.IsValid, "legacy exclusion policy converted compatibility findings into errors");
     Require(legacyPolicy.Warnings.Count > 0, "legacy exclusion policy did not report warnings");
+}
+
+static void PerformanceBudgetAcceptsBoundedMeasurements()
+{
+    var measurement = new WorldPerformanceMeasurement(40d, 12d, 2L * 1024L * 1024L, 123, 123);
+    var report = PerformanceBudget.Evaluate(measurement);
+    Require(report.Passed, string.Join(" | ", report.Failures));
+}
+
+static void PerformanceBudgetRejectsOverrunsAndCountDrift()
+{
+    var measurement = new WorldPerformanceMeasurement(
+        PerformanceBudget.MaximumLateSetupMilliseconds + 1d,
+        PerformanceBudget.MaximumRegistrationMilliseconds + 1d,
+        PerformanceBudget.MaximumManagedMemoryDeltaBytes + 1L,
+        122,
+        123);
+    var report = PerformanceBudget.Evaluate(measurement);
+    Require(!report.Passed, "performance budget accepted an overrun");
+    Require(report.Failures.Count == 4, "performance budget did not report every overrun");
 }
 
 static IReadOnlyList<string> Flatten(GeneratedWorld world) => world.Regions

@@ -2,11 +2,11 @@
 
 Abyssal Ecologies is an experimental mod for the original **Subnautica (2018)** that adds deterministic, procedurally arranged **micro-biomes** to the base game's world. It is not for Subnautica 2 or Subnautica: Below Zero. A generation seed selects region positions, species variants, environmental clusters, and a central landmark. The same seed always produces the same layout.
 
-The current `0.5.1` vertical slice is intentionally asset-light: it clones, recolors, and rescales base-game prefabs to prove the world-generation and Nautilus registration pipeline. It does **not** modify Subnautica's terrain mesh or biome lookup table, and the placeholder species do not yet have unique models, sounds, eggs, scan entries, or AI.
+The current `0.6.0` vertical slice is intentionally asset-light: it clones, recolors, and rescales base-game prefabs to prove the world-generation and Nautilus registration pipeline. It does **not** modify Subnautica's terrain mesh or biome lookup table, and the placeholder species do not yet have unique models, sounds, eggs, scan entries, or AI.
 
 ## Project status
 
-**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. Version 0.5.1 creates a canonical schema-3 manifest with explicit placement and exclusion-policy versions. Existing schema-1 deterministic and schema-2 terrain-resolved manifests migrate without moving saved coordinates; exclusions introduced after a legacy layout was created are retained as bounded compatibility warnings rather than relocation errors. Live terrain snapping remains unresolved because both tested remote batch-loading paths destabilized Subnautica's late-load phase.
+**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. Version 0.6.0 uses the field-validated schema-3 migration model and adds a bounded performance budget for the mod's late-load task. Existing schema-1 deterministic and schema-2 terrain-resolved manifests migrate without moving saved coordinates; exclusions introduced after a legacy layout was created remain compatibility warnings. Live terrain snapping remains unresolved because both tested remote batch-loading paths destabilized Subnautica's late-load phase.
 
 Version 0.3.2 passed its representative in-game regression on 2026-09-24: initial load, all three regions, all flora/fauna/landmarks, the Thermal Spire, save, full restart, reload, and revisit.
 
@@ -27,6 +27,7 @@ Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md]
 - A deterministic replacement-search implementation reserved for future terrain-resolved generation; the experimental runtime resolver is not active in 0.5.1.
 - Active static protection around the Aurora, major precursor/Degasi sites, and lifepods. Runtime terrain and nearby-object rejection remains deferred with the experimental resolver.
 - Bounded success logs, `goto ae1`/`ae2`/`ae3` field-check destinations, and `ae_manifest`, `ae_bounds`, and `ae_validate` diagnostics.
+- An `ae_perf` diagnostic covering late-load setup time, coordinated-spawn registration time, managed-memory change, registered placements, cumulative instantiation callbacks, and currently live custom objects.
 - A game-independent generator check executable.
 
 ## Requirements
@@ -58,11 +59,11 @@ To build, test, and create an install-ready ZIP in one step:
 
 On first launch, BepInEx creates `BepInEx\config\rocks.verburgt.subnautica.abyssalecologies.cfg`. A new save captures those generation settings and deterministic positions in `AbyssalEcologies\AbyssalEcologies.json` beneath its save-slot directory. After that, the saved manifest is authoritative and changing the global seed affects only saves that do not yet have a manifest.
 
-For the 0.5.1 upgrade test, load the validated schema-1 disposable save. The log should report migration from schema 1 to schema 3 without changing its seed or coordinates. Run `ae_manifest` and confirm `schema=3`, `sourceSchema=1`, `migrated=True`, `seed=451230`, `placementMode=deterministic`, and `exclusionCatalog=0`. `ae_validate` should pass while reporting bounded preserved-legacy warnings for exclusions introduced after that save's layout was created. Save, fully restart, reload the same slot, and confirm `sourceSchema=3`, `migrated=False`, and the same region coordinates and warnings.
+For the 0.6.0 performance test, load the validated schema-3 disposable save and run `ae_perf`. The initial report must pass the 250 ms late-setup, 100 ms spawn-registration, 16 MiB managed-memory, and exact-placement-count budgets, with 123 registered placements and nine content types. Run `goto ae1`, wait for the region to stream, and run `ae_perf` again; repeat with `goto ae2`. The later reports show cumulative instantiation callbacks and currently live objects so unloading behavior can be inspected without treating normal streaming variation as a hard failure.
 
 Do not use this prototype on the only copy of an important save. The 0.3.2 layout passed representative in-game inspection, but terrain-aware placement and uninstall testing remain incomplete.
 
-Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.5.1 safely refuses to mix a second manifest into the active session, but it cannot replace the first layout without a restart.
+Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.6.0 safely refuses to mix a second manifest into the active session, but it cannot replace the first layout without a restart.
 
 ## Isolated Windows test launcher
 

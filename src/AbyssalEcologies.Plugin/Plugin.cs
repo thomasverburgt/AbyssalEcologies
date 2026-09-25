@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using System.Diagnostics;
+using System.Linq;
 using AbyssalEcologies.Core;
 using BepInEx;
 using BepInEx.Configuration;
@@ -14,7 +16,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string Guid = "rocks.verburgt.subnautica.abyssalecologies";
     public const string Name = "Abyssal Ecologies";
-    public const string Version = "0.5.1";
+    public const string Version = "0.6.0";
 
     internal static ManualLogSource Log { get; private set; } = null!;
 
@@ -45,6 +47,8 @@ public sealed class Plugin : BaseUnityPlugin
 
     private IEnumerator OnWorldReady(WaitScreenHandler.WaitScreenTask task)
     {
+        var setupStopwatch = Stopwatch.StartNew();
+        var managedMemoryBefore = GC.GetTotalMemory(false);
         task.Status = "Loading the per-save ecology manifest";
         if (_worldRegistered)
         {
@@ -85,13 +89,27 @@ public sealed class Plugin : BaseUnityPlugin
 
         try
         {
-            ContentRegistrar.RegisterWorldSpawns(world);
+            var expectedPlacementCount = world.Regions.Sum(region => region.Placements.Count);
+            var registrationStopwatch = Stopwatch.StartNew();
+            var registration = ContentRegistrar.RegisterWorldSpawns(world);
+            registrationStopwatch.Stop();
             DiagnosticCommands.SetActive(_saveData.Manifest, world);
             _activeManifestJson = WorldManifestSerializer.Serialize(_saveData.Manifest);
             _worldRegistered = true;
             task.Status = $"Registered {world.Regions.Count} micro-biomes";
 
+            setupStopwatch.Stop();
+            var performance = new WorldPerformanceMeasurement(
+                setupStopwatch.Elapsed.TotalMilliseconds,
+                registrationStopwatch.Elapsed.TotalMilliseconds,
+                GC.GetTotalMemory(false) - managedMemoryBefore,
+                registration.PlacementCount,
+                expectedPlacementCount);
+            DiagnosticCommands.SetPerformance(performance, registration.ContentTypeCount);
+            var budget = PerformanceBudget.Evaluate(performance);
+
             Logger.LogInfo($"Registered {world.Regions.Count} manifest-backed micro-biomes after the save finished loading.");
+            Logger.LogInfo($"Performance budget {(budget.Passed ? "PASS" : "FAIL")}: late setup {performance.LateSetupMilliseconds:0.0} ms, spawn registration {performance.RegistrationMilliseconds:0.0} ms, managed delta {performance.ManagedMemoryDeltaBytes / (1024d * 1024d):+0.00;-0.00;0.00} MiB, placements {performance.RegisteredPlacementCount}/{performance.ExpectedPlacementCount}.");
             foreach (var region in world.Regions)
                 Logger.LogInfo($"Region '{region.DisplayName}' centered at {region.Center}; {region.Placements.Count} placements.");
         }

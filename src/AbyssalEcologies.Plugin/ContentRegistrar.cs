@@ -15,6 +15,9 @@ internal static class ContentRegistrar
     private const int InstanceLogLimitPerContent = 3;
     private static readonly Dictionary<string, TechType> RegisteredTechTypes = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, int> LoggedInstanceCounts = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, int> InstantiationCounts = new(StringComparer.Ordinal);
+    private static readonly List<WeakReference> LiveInstances = new();
+    private static int _registeredPlacementCount;
 
     private static readonly ContentDefinition[] Definitions =
     {
@@ -47,12 +50,18 @@ internal static class ContentRegistrar
         return RegisteredTechTypes.Count;
     }
 
-    public static void RegisterWorldSpawns(GeneratedWorld world)
+    public static SpawnRegistrationMetrics RegisterWorldSpawns(GeneratedWorld world)
     {
+        LoggedInstanceCounts.Clear();
+        InstantiationCounts.Clear();
+        LiveInstances.Clear();
+        _registeredPlacementCount = 0;
+
         var placementsByContent = world.Regions
             .SelectMany(region => region.Placements)
             .GroupBy(placement => placement.ContentId)
             .ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.Ordinal);
+        var registeredContentTypeCount = 0;
 
         foreach (var pair in placementsByContent)
         {
@@ -65,6 +74,8 @@ internal static class ContentRegistrar
             var contentId = pair.Key;
             var spawnInfos = pair.Value.Select(placement => ToSpawnInfo(techType, contentId, placement)).ToList();
             CoordinatedSpawnsHandler.RegisterCoordinatedSpawns(spawnInfos);
+            _registeredPlacementCount += pair.Value.Length;
+            registeredContentTypeCount++;
             Plugin.Log.LogInfo($"Registered {pair.Value.Length} coordinated spawns for '{pair.Key}'.");
         }
 
@@ -75,6 +86,28 @@ internal static class ContentRegistrar
             ConsoleCommandsHandler.AddGotoTeleportPosition(commandName, new Vector3(region.Center.X, region.Center.Y + 8f, region.Center.Z));
             Plugin.Log.LogInfo($"Field-check teleport: 'goto {commandName}' -> {region.DisplayName} {region.Center}.");
         }
+
+        return new SpawnRegistrationMetrics(_registeredPlacementCount, registeredContentTypeCount);
+    }
+
+    public static RuntimeSpawnMetrics GetRuntimeMetrics()
+    {
+        var activeCount = 0;
+        for (var index = LiveInstances.Count - 1; index >= 0; index--)
+        {
+            var reference = LiveInstances[index];
+            var gameObject = reference.Target as GameObject;
+            if (!reference.IsAlive || gameObject == null)
+                LiveInstances.RemoveAt(index);
+            else
+                activeCount++;
+        }
+
+        return new RuntimeSpawnMetrics(
+            _registeredPlacementCount,
+            InstantiationCounts.Values.Sum(),
+            activeCount,
+            new Dictionary<string, int>(InstantiationCounts, StringComparer.Ordinal));
     }
 
     private static void RegisterDefinition(ContentDefinition definition, TechType sourceTechType)
@@ -132,12 +165,44 @@ internal static class ContentRegistrar
 
     private static void LogSuccessfulInstance(string contentId, GameObject gameObject)
     {
+        InstantiationCounts.TryGetValue(contentId, out var totalCount);
+        InstantiationCounts[contentId] = totalCount + 1;
+        LiveInstances.Add(new WeakReference(gameObject));
+
         LoggedInstanceCounts.TryGetValue(contentId, out var count);
         if (count >= InstanceLogLimitPerContent)
             return;
 
         LoggedInstanceCounts[contentId] = count + 1;
         Plugin.Log.LogInfo($"Instantiated '{contentId}' at {gameObject.transform.position} (sample {count + 1}/{InstanceLogLimitPerContent}).");
+    }
+
+    internal sealed class SpawnRegistrationMetrics
+    {
+        public SpawnRegistrationMetrics(int placementCount, int contentTypeCount)
+        {
+            PlacementCount = placementCount;
+            ContentTypeCount = contentTypeCount;
+        }
+
+        public int PlacementCount { get; }
+        public int ContentTypeCount { get; }
+    }
+
+    internal sealed class RuntimeSpawnMetrics
+    {
+        public RuntimeSpawnMetrics(int registeredPlacementCount, int instantiationCallbacks, int activeInstanceCount, IReadOnlyDictionary<string, int> instantiationCounts)
+        {
+            RegisteredPlacementCount = registeredPlacementCount;
+            InstantiationCallbacks = instantiationCallbacks;
+            ActiveInstanceCount = activeInstanceCount;
+            InstantiationCounts = instantiationCounts;
+        }
+
+        public int RegisteredPlacementCount { get; }
+        public int InstantiationCallbacks { get; }
+        public int ActiveInstanceCount { get; }
+        public IReadOnlyDictionary<string, int> InstantiationCounts { get; }
     }
 
     private sealed class ContentDefinition
