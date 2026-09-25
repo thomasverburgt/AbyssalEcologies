@@ -13,7 +13,7 @@ Exit gate: compile succeeds, generator checks pass, and each configured seed reg
 - Delay final placement until a save is loaded. *(implemented in 0.2.0)*
 - Probe terrain and water with downward raycasts. *(experimental resolver retained, but remote batch streaming was disabled in 0.3.2 after live-load failures)*
 - Reject Aurora, precursor-base, lifepod, wreck, void, and player-base exclusion volumes. *(static exclusions active in 0.3.2; live terrain/object checks deferred with the resolver)*
-- Persist a generated-world manifest per save slot so later configuration changes cannot silently relocate content. *(canonical schema 3, schema 1/2 migration, and legacy exclusion-policy preservation implemented in 0.5.1; save/restart validation pending)*
+- Persist a generated-world manifest per save slot so later configuration changes cannot silently relocate content. *(canonical schema 3, schema 1/2 migration, and legacy exclusion-policy preservation implemented and field-validated in 0.5.1)*
 - Add developer diagnostics that print the manifest, report region bounds, validate placements, and expose field-check teleports. *(implemented and field-validated in 0.4.0)*
 - Add explicitly guarded manifest regeneration and temporary in-world boundary visualization for disposable saves.
 

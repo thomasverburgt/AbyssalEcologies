@@ -21,7 +21,7 @@ The repository currently provides:
 - a guarded Windows launcher for a copied test installation; and
 - automated checks for determinism, seed variation, placement counts, exclusion from the starting radius, depth bounds, and inter-region separation.
 
-The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, coordinate-preserving migration fixtures for schemas 1 and 2, byte-stable canonical schema-3 round trips, configuration isolation, rejection of corrupt/too-old/contradictory/future schemas, and the same diagnostics used by the in-game validator. Version 0.3.2 passed the content and save/reload regression; version 0.4.0 passed its diagnostic field test. The first 0.5.0 field run proved coordinate-preserving schema migration but exposed that newly introduced exclusions were being misclassified as errors for a legacy layout. Version 0.5.1 persists an exclusion-catalog version and reports those compatibility findings as warnings; its save/restart field test is pending. Terrain-aware placement remains unresolved because both forced remote batch-loading paths destabilized Subnautica's late load phase.
+The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, coordinate-preserving migration fixtures for schemas 1 and 2, byte-stable canonical schema-3 round trips, configuration isolation, rejection of corrupt/too-old/contradictory/future schemas, and the same diagnostics used by the in-game validator. Version 0.3.2 passed the content and save/reload regression; version 0.4.0 passed its diagnostic field test. Version 0.5.1 passed its migration/save/restart field test on 2026-09-25: schema 1 migrated to schema 3 with the same seed and all 123 placements, canonical reload performed no second migration, and 26 post-layout Lifepod 12 findings remained bounded legacy warnings. Terrain-aware placement remains unresolved because both forced remote batch-loading paths destabilized Subnautica's late load phase.
 
 ## Active milestone: terrain-aware save manifests
 
@@ -34,7 +34,7 @@ This is the critical path. Original art and expanded content remain blocked unti
 | Partial | Exclusion volumes | Reject Aurora, lifepods, wrecks, precursor sites, void, map edge, and player structures | Static exclusions are active and the representative layout passed inspection; runtime terrain/object rejection is deferred |
 | Done | Per-save manifest | Persist seed, schema version, regions, placements, and content identifiers | Fixture and round-trip checks plus in-game save/quit/relaunch/reload passed |
 | Done | Developer commands | Print manifest, teleport to region, report bounds, and validate placements | Shared-core checks and the 0.4.0 in-game field test passed on 2026-09-25 |
-| In test | Migration framework | Refuse incompatible manifests and migrate explicitly supported schemas | Schemas 1 and 2 migrate without coordinate drift; legacy exclusion-policy findings remain warnings; schema 3 is byte-stable; incompatible fixtures are rejected |
+| Done | Migration framework | Refuse incompatible manifests and migrate explicitly supported schemas | Offline fixtures pass; schema 1 to schema 3 save/restart field migration passed without coordinate drift on 2026-09-25 |
 | P1 | Performance budget | Stream regions without persistent whole-map objects | Profiling captures frame time, allocations, object count, and unload behavior |
 
 ### Milestone acceptance gate
@@ -90,4 +90,4 @@ Passing automated checks or reaching the main menu is not sufficient evidence of
 
 ## Immediate next increment
 
-Load the validated schema-1 disposable save under 0.5.1 and confirm `ae_manifest` reports schema 3, source schema 1, deterministic placement, exclusion catalog 0, and unchanged seed/coordinates. Confirm `ae_validate` passes with bounded legacy exclusion warnings. Save, fully restart, reload the same slot, and confirm it loads canonically as schema 3 without a second migration while retaining the same warning classification. Then begin the performance-budget slice.
+Implement the performance-budget slice against the stable deterministic layout. Capture bounded load duration, coordinated-spawn registration duration, managed-memory change, registered placement count, and sampled instantiated-object counts without reintroducing forced remote terrain streaming. Validate initial load and full restart in the isolated test copy.

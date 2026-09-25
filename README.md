@@ -12,6 +12,8 @@ Version 0.3.2 passed its representative in-game regression on 2026-09-24: initia
 
 Version 0.4.0 passed its diagnostic field test on 2026-09-25: manifest reporting returned three regions and 123 placements, deterministic/static-exclusion validation returned zero errors, the `ae1` teleport instantiated its landmark/flora/fauna, and the bounds command confirmed the player inside the region.
 
+Version 0.5.1 passed its migration field test on 2026-09-25: the schema-1 save migrated to schema 3 without seed, region, or placement drift; save/restart loaded canonically without a second migration; and 26 post-layout Lifepod 12 exclusion findings remained bounded legacy warnings rather than errors.
+
 Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md](docs/WORK_PLAN.md). The longer product sequence is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What is implemented
