@@ -12,10 +12,13 @@ Check("one hundred seeds obey invariants", OneHundredSeedsObeyInvariants);
 Check("protected areas reject region centers", ProtectedAreasRejectRegionCenters);
 Check("replacement search is deterministic", ReplacementSearchIsDeterministic);
 Check("manifest serialization is byte stable", ManifestSerializationIsByteStable);
-Check("schema 1 fixture loads without drift", SchemaOneFixtureLoadsWithoutDrift);
-Check("schema 2 fixture loads without drift", SchemaTwoFixtureLoadsWithoutDrift);
+Check("schema 1 fixture migrates without layout drift", SchemaOneFixtureMigratesWithoutLayoutDrift);
+Check("schema 2 fixture migrates without layout drift", SchemaTwoFixtureMigratesWithoutLayoutDrift);
+Check("schema 3 fixture loads without drift", SchemaThreeFixtureLoadsWithoutDrift);
 Check("manifest preserves saved layout over new settings", ManifestPreservesSavedLayout);
 Check("corrupt manifest is rejected", CorruptManifestIsRejected);
+Check("unsupported old manifest schema is rejected", UnsupportedOldManifestSchemaIsRejected);
+Check("contradictory legacy manifest is rejected", ContradictoryLegacyManifestIsRejected);
 Check("future manifest schema is rejected", FutureManifestSchemaIsRejected);
 Check("world diagnostics accept generated layouts", WorldDiagnosticsAcceptGeneratedLayouts);
 Check("world diagnostics reject invalid layouts", WorldDiagnosticsRejectInvalidLayouts);
@@ -135,28 +138,41 @@ static void ManifestSerializationIsByteStable()
     Require(Flatten(world).SequenceEqual(Flatten(reloaded.ToGeneratedWorld())), "manifest round trip changed placements");
 }
 
-static void SchemaOneFixtureLoadsWithoutDrift()
+static void SchemaOneFixtureMigratesWithoutLayoutDrift()
 {
     var fixturePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "manifest-v1.json");
-    var fixture = File.ReadAllText(fixturePath).Trim();
-    var manifest = WorldManifestSerializer.Deserialize(fixture);
+    var manifest = WorldManifestSerializer.Deserialize(File.ReadAllText(fixturePath));
 
     Require(manifest.Seed == 42, "fixture seed changed");
     Require(manifest.Regions.Count == 1, "fixture region count changed");
     Require(manifest.Regions[0].Placements[0].ContentId == "fixture-content", "fixture content identifier changed");
-    Require(WorldManifestSerializer.Serialize(manifest) == fixture, "schema 1 fixture did not serialize byte-equivalently");
+    Require(manifest.SourceSchemaVersion == 1 && manifest.WasMigrated, "schema 1 migration was not recorded");
+    Require(manifest.SchemaVersion == WorldManifest.CurrentSchemaVersion, "schema 1 did not migrate to the current schema");
+    Require(manifest.PlacementMode == WorldManifest.DeterministicPlacementMode && !manifest.TerrainResolved, "schema 1 migration chose the wrong placement mode");
+    Require(manifest.Regions[0].Placements[0].Position.Y == -5f, "schema 1 migration changed placement coordinates");
 }
 
-static void SchemaTwoFixtureLoadsWithoutDrift()
+static void SchemaTwoFixtureMigratesWithoutLayoutDrift()
 {
     var fixturePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "manifest-v2.json");
+    var manifest = WorldManifestSerializer.Deserialize(File.ReadAllText(fixturePath));
+
+    Require(manifest.SourceSchemaVersion == 2 && manifest.WasMigrated, "schema 2 migration was not recorded");
+    Require(manifest.SchemaVersion == WorldManifest.CurrentSchemaVersion, "schema 2 did not migrate to the current schema");
+    Require(manifest.TerrainResolved, "schema 2 fixture lost terrain resolution state");
+    Require(manifest.PlacementMode == WorldManifest.TerrainResolvedPlacementMode, "schema 2 migration chose the wrong placement mode");
+    Require(manifest.Regions[0].Placements[0].Position.Y == -205f, "schema 2 fixture placement changed");
+}
+
+static void SchemaThreeFixtureLoadsWithoutDrift()
+{
+    var fixturePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "manifest-v3.json");
     var fixture = File.ReadAllText(fixturePath).Trim();
     var manifest = WorldManifestSerializer.Deserialize(fixture);
 
-    Require(manifest.SchemaVersion == 2, "schema 2 fixture version changed");
-    Require(manifest.TerrainResolved, "schema 2 fixture lost terrain resolution state");
-    Require(manifest.Regions[0].Placements[0].Position.Y == -205f, "schema 2 fixture placement changed");
-    Require(WorldManifestSerializer.Serialize(manifest) == fixture, "schema 2 fixture did not serialize byte-equivalently");
+    Require(manifest.SourceSchemaVersion == 3 && !manifest.WasMigrated, "schema 3 fixture was treated as migrated");
+    Require(manifest.PlacementMode == WorldManifest.DeterministicPlacementMode, "schema 3 fixture placement mode changed");
+    Require(WorldManifestSerializer.Serialize(manifest) == fixture, "schema 3 fixture did not serialize byte-equivalently");
 }
 
 static void ManifestPreservesSavedLayout()
@@ -172,6 +188,19 @@ static void ManifestPreservesSavedLayout()
 static void CorruptManifestIsRejected()
 {
     RequireThrows(() => WorldManifestSerializer.Deserialize("{ definitely-not-json"), "corrupt JSON was accepted");
+}
+
+static void UnsupportedOldManifestSchemaIsRejected()
+{
+    var fixture = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "manifest-v1.json"));
+    RequireThrows(() => WorldManifestSerializer.Deserialize(fixture.Replace("\"schemaVersion\":1", "\"schemaVersion\":0")), "unsupported old schema was accepted");
+}
+
+static void ContradictoryLegacyManifestIsRejected()
+{
+    var fixture = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "manifest-v1.json")).TrimEnd();
+    var contradictory = fixture.Substring(0, fixture.Length - 1) + ",\"terrainResolved\":true}";
+    RequireThrows(() => WorldManifestSerializer.Deserialize(contradictory), "contradictory schema 1 manifest was accepted");
 }
 
 static void FutureManifestSchemaIsRejected()

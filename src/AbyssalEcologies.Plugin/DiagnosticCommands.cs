@@ -33,7 +33,7 @@ internal static class DiagnosticCommands
 
         var placementCount = _world.Regions.Sum(region => region.Placements.Count);
         var builder = new StringBuilder();
-        builder.Append($"AE manifest: schema={_manifest.SchemaVersion}, generator={_manifest.GeneratorVersion}, seed={_world.Seed}, terrainResolved={_manifest.TerrainResolved}, regions={_world.Regions.Count}, placements={placementCount}.");
+        builder.Append($"AE manifest: schema={_manifest.SchemaVersion}, sourceSchema={_manifest.SourceSchemaVersion}, migrated={_manifest.WasMigrated}, generator={_manifest.GeneratorVersion}, seed={_world.Seed}, placementMode={_manifest.PlacementMode}, terrainResolved={_manifest.TerrainResolved}, regions={_world.Regions.Count}, placements={placementCount}.");
         for (var index = 0; index < _world.Regions.Count; index++)
         {
             var region = _world.Regions[index];
@@ -100,7 +100,7 @@ internal static class DiagnosticCommands
         var report = WorldDiagnostics.Validate(_world);
         if (report.IsValid)
         {
-            var success = $"AE validation PASS: schema {_manifest.SchemaVersion}, seed {_world.Seed}, {report.RegionCount} regions, {report.PlacementCount} placements, zero deterministic/static-exclusion errors.";
+            var success = $"AE validation PASS: schema {_manifest.SchemaVersion} ({_manifest.PlacementMode}), seed {_world.Seed}, {report.RegionCount} regions, {report.PlacementCount} placements, zero deterministic/static-exclusion errors.";
             Plugin.Log.LogInfo(success);
             return success;
         }

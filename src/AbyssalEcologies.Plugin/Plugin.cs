@@ -14,7 +14,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string Guid = "rocks.verburgt.subnautica.abyssalecologies";
     public const string Name = "Abyssal Ecologies";
-    public const string Version = "0.4.0";
+    public const string Version = "0.5.0";
 
     internal static ManualLogSource Log { get; private set; } = null!;
 
@@ -75,10 +75,12 @@ public sealed class Plugin : BaseUnityPlugin
         else
         {
             world = _saveData.Manifest.ToGeneratedWorld();
+            if (_saveData.Manifest.WasMigrated)
+                Logger.LogInfo($"Migrated this save's manifest from schema {_saveData.Manifest.SourceSchemaVersion} to schema {_saveData.Manifest.SchemaVersion} without changing its seed or coordinates.");
             if (_saveData.Manifest.TerrainResolved)
                 Logger.LogInfo($"Loaded terrain-resolved manifest schema {_saveData.Manifest.SchemaVersion} for this save using persisted seed {world.Seed}; current global generation settings were ignored.");
             else
-                Logger.LogWarning($"Loaded schema {_saveData.Manifest.SchemaVersion} manifest using its validated deterministic coordinates unchanged. Runtime terrain probing is disabled in {Version}.");
+                Logger.LogWarning($"Loaded {_saveData.Manifest.PlacementMode} manifest schema {_saveData.Manifest.SchemaVersion} using its validated coordinates unchanged. Runtime terrain probing is disabled in {Version}.");
         }
 
         try

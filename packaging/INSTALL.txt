@@ -1,4 +1,4 @@
-Abyssal Ecologies 0.4.0
+Abyssal Ecologies 0.5.0
 
 Requirements:
 - Original Subnautica (2018), current non-Legacy desktop branch
@@ -6,15 +6,15 @@ Requirements:
 - Nautilus
 
 Install:
-1. Back up important saves and use a disposable test save. Existing schema-1 saves remain on their validated deterministic coordinates.
+1. Back up important saves and use a disposable test save. Schema-1 and schema-2 manifests migrate to canonical schema 3 without changing saved coordinates.
 2. Merge the included BepInEx folder into the Subnautica game folder.
 3. Launch the game once.
 4. Load a disposable save; no layout is generated at the main menu.
 5. Save once to persist `AbyssalEcologies.json` inside that save slot.
 6. Check BepInEx/LogOutput.log for manifest status, region coordinates, and sampled prefab instances.
-7. Run `ae_help`, `ae_manifest`, `ae_bounds 1`, and `ae_validate` in the developer console. Use `goto ae1`, `goto ae2`, and `goto ae3` for field checks.
+7. Run `ae_manifest` and `ae_validate`. During an upgrade test, confirm the source schema, migration flag, seed, placement mode, and region coordinates.
 
-Restart Subnautica before switching to a different save slot. Version 0.4.0 refuses to mix two per-save manifests in one running game process.
+Restart Subnautica before switching to a different save slot. Version 0.5.0 refuses to mix two per-save manifests in one running game process.
 
 Configuration is created at:
 BepInEx/config/rocks.verburgt.subnautica.abyssalecologies.cfg

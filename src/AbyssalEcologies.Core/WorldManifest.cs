@@ -11,9 +11,11 @@ namespace AbyssalEcologies.Core;
 [DataContract]
 public sealed class WorldManifest
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
     public const int OldestSupportedSchemaVersion = 1;
     public const int CurrentGeneratorVersion = 1;
+    public const string DeterministicPlacementMode = "deterministic";
+    public const string TerrainResolvedPlacementMode = "terrain-resolved";
 
     [DataMember(Name = "schemaVersion", Order = 1)]
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
@@ -27,8 +29,14 @@ public sealed class WorldManifest
     [DataMember(Name = "regions", Order = 4)]
     public List<ManifestRegion> Regions { get; set; } = new();
 
-    [DataMember(Name = "terrainResolved", Order = 5, EmitDefaultValue = false)]
+    [DataMember(Name = "placementMode", Order = 5)]
+    public string PlacementMode { get; set; } = string.Empty;
+
+    [DataMember(Name = "terrainResolved", Order = 6, EmitDefaultValue = false)]
     public bool TerrainResolved { get; set; }
+
+    public int SourceSchemaVersion { get; internal set; } = CurrentSchemaVersion;
+    public bool WasMigrated => SourceSchemaVersion != SchemaVersion;
 
     public static WorldManifest FromGeneratedWorld(GeneratedWorld world, bool terrainResolved)
     {
@@ -36,8 +44,9 @@ public sealed class WorldManifest
 
         return new WorldManifest
         {
-            SchemaVersion = terrainResolved ? CurrentSchemaVersion : OldestSupportedSchemaVersion,
+            SchemaVersion = CurrentSchemaVersion,
             Seed = world.Seed,
+            PlacementMode = terrainResolved ? TerrainResolvedPlacementMode : DeterministicPlacementMode,
             TerrainResolved = terrainResolved,
             Regions = world.Regions.Select(region => new ManifestRegion
             {
@@ -77,12 +86,14 @@ public sealed class WorldManifest
 
     public void Validate()
     {
-        if (SchemaVersion < OldestSupportedSchemaVersion || SchemaVersion > CurrentSchemaVersion)
-            throw new InvalidDataException($"Unsupported manifest schema {SchemaVersion}; supported range is {OldestSupportedSchemaVersion}-{CurrentSchemaVersion}.");
-        if (SchemaVersion >= 2 && !TerrainResolved)
-            throw new InvalidDataException("Schema 2 manifests must contain terrain-resolved placements.");
+        if (SchemaVersion != CurrentSchemaVersion)
+            throw new InvalidDataException($"Manifest schema {SchemaVersion} was not migrated to canonical schema {CurrentSchemaVersion}.");
         if (GeneratorVersion != CurrentGeneratorVersion)
             throw new InvalidDataException($"Unsupported generator version {GeneratorVersion}; expected {CurrentGeneratorVersion}.");
+        if (PlacementMode != DeterministicPlacementMode && PlacementMode != TerrainResolvedPlacementMode)
+            throw new InvalidDataException($"Unsupported placement mode '{PlacementMode}'.");
+        if (TerrainResolved != (PlacementMode == TerrainResolvedPlacementMode))
+            throw new InvalidDataException("Manifest placement mode contradicts its terrain-resolution flag.");
         if (Regions == null || Regions.Count == 0)
             throw new InvalidDataException("Manifest contains no regions.");
 
@@ -179,6 +190,7 @@ public static class WorldManifestSerializer
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
             var manifest = Serializer.ReadObject(stream) as WorldManifest
                 ?? throw new InvalidDataException("Manifest JSON did not contain a world manifest.");
+            WorldManifestMigrator.MigrateToCurrent(manifest);
             manifest.Validate();
             return manifest;
         }
@@ -189,6 +201,39 @@ public static class WorldManifestSerializer
         catch (Exception exception)
         {
             throw new InvalidDataException("Manifest JSON is invalid.", exception);
+        }
+    }
+}
+
+public static class WorldManifestMigrator
+{
+    public static void MigrateToCurrent(WorldManifest manifest)
+    {
+        if (manifest == null) throw new ArgumentNullException(nameof(manifest));
+
+        var sourceSchema = manifest.SchemaVersion;
+        manifest.SourceSchemaVersion = sourceSchema;
+        if (sourceSchema < WorldManifest.OldestSupportedSchemaVersion || sourceSchema > WorldManifest.CurrentSchemaVersion)
+            throw new InvalidDataException($"Unsupported manifest schema {sourceSchema}; supported range is {WorldManifest.OldestSupportedSchemaVersion}-{WorldManifest.CurrentSchemaVersion}.");
+
+        switch (sourceSchema)
+        {
+            case 1:
+                if (manifest.TerrainResolved)
+                    throw new InvalidDataException("Schema 1 manifests cannot claim terrain-resolved placements.");
+                manifest.PlacementMode = WorldManifest.DeterministicPlacementMode;
+                manifest.SchemaVersion = WorldManifest.CurrentSchemaVersion;
+                break;
+            case 2:
+                if (!manifest.TerrainResolved)
+                    throw new InvalidDataException("Schema 2 manifests must contain terrain-resolved placements.");
+                manifest.PlacementMode = WorldManifest.TerrainResolvedPlacementMode;
+                manifest.SchemaVersion = WorldManifest.CurrentSchemaVersion;
+                break;
+            case WorldManifest.CurrentSchemaVersion:
+                break;
+            default:
+                throw new InvalidDataException($"No migration path exists for manifest schema {sourceSchema}.");
         }
     }
 }
