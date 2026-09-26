@@ -104,7 +104,11 @@ internal static class ContentRegistrar
                 .Take(8)
                 .Select(placement => placement.Position)
                 .ToArray();
-            LandmarkSitePlans.Add(new LandmarkSitePlan(landmark.ContentId, landmark.Position, floraSites));
+            LandmarkSitePlans.Add(new LandmarkSitePlan(
+                landmark.ContentId,
+                landmark.Position,
+                floraSites,
+                PlannedLandmarkSpawnAnchor(landmark.ContentId, landmark.Position, floraSites)));
         }
 
         var placementsByContent = world.Regions
@@ -133,8 +137,12 @@ internal static class ContentRegistrar
         {
             var region = world.Regions[index];
             var commandName = $"ae{index + 1}";
-            ConsoleCommandsHandler.AddGotoTeleportPosition(commandName, new Vector3(region.Center.X, region.Center.Y + 8f, region.Center.Z));
-            Plugin.Log.LogInfo($"Field-check teleport: 'goto {commandName}' -> {region.DisplayName} {region.Center}.");
+            var landmark = region.Placements.FirstOrDefault(placement => placement.Kind == PlacementKind.Landmark);
+            var fieldCheckPoint = landmark == null
+                ? region.Center
+                : FindLandmarkSitePlan(landmark.ContentId, landmark.Position)?.SpawnAnchor ?? region.Center;
+            ConsoleCommandsHandler.AddGotoTeleportPosition(commandName, new Vector3(fieldCheckPoint.X, fieldCheckPoint.Y + 8f, fieldCheckPoint.Z));
+            Plugin.Log.LogInfo($"Field-check teleport: 'goto {commandName}' -> {region.DisplayName} {fieldCheckPoint}.");
         }
 
         return new SpawnRegistrationMetrics(_registeredPlacementCount, registeredContentTypeCount);
@@ -185,9 +193,12 @@ internal static class ContentRegistrar
         Plugin.Log.LogInfo($"Registered '{definition.Id}' definition from proven source TechType '{definition.SourceTechType}'.");
     }
 
-    private static SpawnLocation ToSpawnLocation(GeneratedPlacement placement)
+    private static SpawnLocation ToSpawnLocation(string contentId, GeneratedPlacement placement)
     {
-        var position = new Vector3(placement.Position.X, placement.Position.Y, placement.Position.Z);
+        var spawnPoint = LandmarkContentIds.Contains(contentId)
+            ? FindLandmarkSitePlan(contentId, placement.Position)?.SpawnAnchor ?? placement.Position
+            : placement.Position;
+        var position = new Vector3(spawnPoint.X, spawnPoint.Y, spawnPoint.Z);
         var angles = new Vector3(placement.EulerAngles.X, placement.EulerAngles.Y, placement.EulerAngles.Z);
         var scale = Vector3.one * placement.Scale;
         return new SpawnLocation(position, angles, scale);
@@ -214,7 +225,7 @@ internal static class ContentRegistrar
 
     private static SpawnInfo ToSpawnInfo(TechType techType, string contentId, GeneratedPlacement placement)
     {
-        var location = ToSpawnLocation(placement);
+        var location = ToSpawnLocation(contentId, placement);
         return new SpawnInfo(
             techType,
             location.Position,
@@ -304,9 +315,9 @@ internal static class ContentRegistrar
 
         var plan = LandmarkSitePlans
             .Where(item => string.Equals(item.ContentId, contentId, StringComparison.Ordinal))
-            .OrderBy(item => HorizontalDistanceSquared(item.LandmarkPosition, origin))
+            .OrderBy(item => HorizontalDistanceSquared(item.SpawnAnchor, origin))
             .FirstOrDefault();
-        if (plan != null && HorizontalDistanceSquared(plan.LandmarkPosition, origin) < 1f)
+        if (plan != null && HorizontalDistanceSquared(plan.SpawnAnchor, origin) < 1f)
         {
             var phase = (stableOffset & 255) * (Mathf.PI * 2f / 256f);
             foreach (var flora in plan.FloraSites)
@@ -324,6 +335,27 @@ internal static class ContentRegistrar
 
         foreach (var site in PlacementSearchPattern.Around(origin, stableOffset, LandmarkSearchRadius).Skip(1))
             yield return site;
+    }
+
+    private static LandmarkSitePlan? FindLandmarkSitePlan(string contentId, WorldPoint manifestPosition)
+    {
+        return LandmarkSitePlans
+            .Where(item => string.Equals(item.ContentId, contentId, StringComparison.Ordinal))
+            .OrderBy(item => HorizontalDistanceSquared(item.LandmarkPosition, manifestPosition))
+            .FirstOrDefault();
+    }
+
+    private static WorldPoint PlannedLandmarkSpawnAnchor(string contentId, WorldPoint landmark, IReadOnlyList<WorldPoint> floraSites)
+    {
+        if (!string.Equals(contentId, "glass-arch", StringComparison.Ordinal) || floraSites.Count == 0)
+            return landmark;
+
+        var flora = floraSites[0];
+        var phase = (LandmarkStableOffset(contentId) & 255) * (Mathf.PI * 2f / 256f);
+        return new WorldPoint(
+            flora.X + (Mathf.Cos(phase) * FloraSiteRingRadius),
+            flora.Y,
+            flora.Z + (Mathf.Sin(phase) * FloraSiteRingRadius));
     }
 
     private static float HorizontalDistanceSquared(WorldPoint first, WorldPoint second)
@@ -493,16 +525,18 @@ internal static class ContentRegistrar
 
     private sealed class LandmarkSitePlan
     {
-        public LandmarkSitePlan(string contentId, WorldPoint landmarkPosition, IReadOnlyList<WorldPoint> floraSites)
+        public LandmarkSitePlan(string contentId, WorldPoint landmarkPosition, IReadOnlyList<WorldPoint> floraSites, WorldPoint spawnAnchor)
         {
             ContentId = contentId;
             LandmarkPosition = landmarkPosition;
             FloraSites = floraSites;
+            SpawnAnchor = spawnAnchor;
         }
 
         public string ContentId { get; }
         public WorldPoint LandmarkPosition { get; }
         public IReadOnlyList<WorldPoint> FloraSites { get; }
+        public WorldPoint SpawnAnchor { get; }
     }
 
     internal sealed class SpawnRegistrationMetrics
