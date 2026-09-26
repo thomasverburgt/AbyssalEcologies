@@ -61,6 +61,9 @@ internal static class ContentRegistrar
     private static bool _useOriginalCinderRay = true;
     private static string _cinderRayRegistrationDetail = "not registered";
     private static string _cinderRayEggRegistrationDetail = "not registered";
+    private static bool _useOriginalLanternSkate = true;
+    private static string _lanternSkateRegistrationDetail = "not registered";
+    private static string _lanternSkateEggRegistrationDetail = "not registered";
 
     private static readonly ContentDefinition[] Definitions =
     {
@@ -95,6 +98,7 @@ internal static class ContentRegistrar
 
     public static void ConfigureOriginalGlassfin(bool enabled) => _useOriginalGlassfin = enabled;
     public static void ConfigureOriginalCinderRay(bool enabled) => _useOriginalCinderRay = enabled;
+    public static void ConfigureOriginalLanternSkate(bool enabled) => _useOriginalLanternSkate = enabled;
 
     public static string GetFaunaStatus()
     {
@@ -103,7 +107,9 @@ internal static class ContentRegistrar
         var feeding = controllers.Count(controller => controller.IsFeeding);
         var cinderRegistered = RegisteredTechTypes.ContainsKey("cinder-ray") ? "yes" : "no";
         var cinderControllers = UnityEngine.Object.FindObjectsOfType<CinderRayPrototypeController>();
-        return $"AE Glassfin prototype: enabled={_useOriginalGlassfin}, registered={registered}, active={controllers.Length}, filterFeeding={feeding}, callsPlayed={GlassfinPrototypeController.CallCount}, assets={_glassfinRegistrationDetail}, egg={_glassfinEggRegistrationDetail}.\nAE Cinder Ray prototype: enabled={_useOriginalCinderRay}, registered={cinderRegistered}, active={cinderControllers.Length}, callsPlayed={CinderRayPrototypeController.CallCount}, assets={_cinderRayRegistrationDetail}, egg={_cinderRayEggRegistrationDetail}.";
+        var lanternRegistered = RegisteredTechTypes.ContainsKey("lantern-skate") ? "yes" : "no";
+        var lanternControllers = UnityEngine.Object.FindObjectsOfType<LanternSkatePrototypeController>();
+        return $"AE Glassfin prototype: enabled={_useOriginalGlassfin}, registered={registered}, active={controllers.Length}, filterFeeding={feeding}, callsPlayed={GlassfinPrototypeController.CallCount}, assets={_glassfinRegistrationDetail}, egg={_glassfinEggRegistrationDetail}.\nAE Cinder Ray prototype: enabled={_useOriginalCinderRay}, registered={cinderRegistered}, active={cinderControllers.Length}, callsPlayed={CinderRayPrototypeController.CallCount}, assets={_cinderRayRegistrationDetail}, egg={_cinderRayEggRegistrationDetail}.\nAE Lantern Skate prototype: enabled={_useOriginalLanternSkate}, registered={lanternRegistered}, active={lanternControllers.Length}, callsPlayed={LanternSkatePrototypeController.CallCount}, assets={_lanternSkateRegistrationDetail}, egg={_lanternSkateEggRegistrationDetail}.";
     }
 
     public static SpawnRegistrationMetrics RegisterWorldSpawns(GeneratedWorld world)
@@ -206,11 +212,14 @@ internal static class ContentRegistrar
         var classId = $"AbyssalEcologies_{definition.Id.Replace('-', '_')}";
         var originalGlassfin = _useOriginalGlassfin && string.Equals(definition.Id, "glassfin", StringComparison.Ordinal);
         var originalCinderRay = _useOriginalCinderRay && string.Equals(definition.Id, "cinder-ray", StringComparison.Ordinal);
+        var originalLanternSkate = _useOriginalLanternSkate && string.Equals(definition.Id, "lantern-skate", StringComparison.Ordinal);
         var prefab = originalGlassfin
             ? new CustomPrefab(classId, definition.DisplayName, definition.Description, GlassfinPrototype.Icon)
             : originalCinderRay
                 ? new CustomPrefab(classId, definition.DisplayName, definition.Description, CinderRayPrototype.Icon)
-            : new CustomPrefab(classId, definition.DisplayName, definition.Description);
+                : originalLanternSkate
+                    ? new CustomPrefab(classId, definition.DisplayName, definition.Description, LanternSkatePrototype.Icon)
+                    : new CustomPrefab(classId, definition.DisplayName, definition.Description);
         var template = new CloneTemplate(prefab.Info, sourceTechType)
         {
             ModifyPrefab = gameObject =>
@@ -224,6 +233,13 @@ internal static class ContentRegistrar
                             _cinderRayRegistrationDetail = cinderDetail;
                         else
                             _cinderRayRegistrationDetail = $"Rabbit Ray rollback visual active: {cinderDetail}";
+                    }
+                    else if (originalLanternSkate)
+                    {
+                        if (LanternSkatePrototype.TryReplaceVisuals(gameObject, out var lanternDetail))
+                            _lanternSkateRegistrationDetail = lanternDetail;
+                        else
+                            _lanternSkateRegistrationDetail = $"Jellyray rollback visual active: {lanternDetail}";
                     }
                     return;
                 }
@@ -270,17 +286,38 @@ internal static class ContentRegistrar
                 PDAHandler.AddCustomScannerEntry(prefab.Info.TechType, 5f, false, encyclopediaKey);
             });
         }
+        if (originalLanternSkate)
+        {
+            const string encyclopediaKey = "AbyssalEcologiesLanternSkate";
+            prefab.AddOnRegister(() =>
+            {
+                PDAHandler.AddEncyclopediaEntry(
+                    encyclopediaKey,
+                    "Lifeforms/Fauna/Herbivores",
+                    "Lantern Skate",
+                    "A slow ghostlight grazer whose translucent veils and paired trailing ribbons pulse in sequence. Juveniles shelter among Ghost Blooms while adults circulate nutrients through the nursery.",
+                    LanternSkatePrototype.EncyclopediaTexture,
+                    LanternSkatePrototype.Icon,
+                    PDAHandler.UnlockBasic,
+                    null);
+                PDAHandler.AddCustomScannerEntry(prefab.Info.TechType, 5f, false, encyclopediaKey);
+            });
+        }
         prefab.Register();
         RegisteredTechTypes.Add(definition.Id, prefab.Info.TechType);
         if (originalGlassfin)
             RegisterGlassfinEgg(prefab.Info.TechType);
         if (originalCinderRay)
             RegisterCinderRayEgg(prefab.Info.TechType);
+        if (originalLanternSkate)
+            RegisterLanternSkateEgg(prefab.Info.TechType);
         Plugin.Log.LogInfo(originalGlassfin
             ? $"Registered '{definition.Id}' with original procedural visuals/audio, scanner entry, and hatchable egg on the proven '{definition.SourceTechType}' gameplay shell."
             : originalCinderRay
                 ? $"Registered '{definition.Id}' with original procedural visuals/audio, scanner entry, and hatchable egg on the proven '{definition.SourceTechType}' gameplay shell."
-            : $"Registered '{definition.Id}' definition from proven source TechType '{definition.SourceTechType}'.");
+                : originalLanternSkate
+                    ? $"Registered '{definition.Id}' with original procedural visuals/audio, scanner entry, and hatchable egg on the proven '{definition.SourceTechType}' gameplay shell."
+                    : $"Registered '{definition.Id}' definition from proven source TechType '{definition.SourceTechType}'.");
     }
 
     private static void RegisterGlassfinEgg(TechType glassfinTechType)
@@ -350,6 +387,37 @@ internal static class ContentRegistrar
         egg.CreateCreatureEgg(1).WithRequiredLargeAcuSize(1).SetAcidImmune(true);
         egg.Register();
         Plugin.Log.LogInfo("Registered a distinct hatchable Cinder Ray egg with an original procedural shell on the proven Jellyray egg gameplay shell.");
+    }
+
+    private static void RegisterLanternSkateEgg(TechType lanternSkateTechType)
+    {
+        if (!Enum.TryParse("JellyrayEgg", ignoreCase: false, out TechType sourceEggTechType))
+        {
+            _lanternSkateEggRegistrationDetail = "rollback: JellyrayEgg source is unavailable";
+            Plugin.Log.LogWarning("Lantern Skate egg registration skipped because the JellyrayEgg TechType is unavailable in this game build.");
+            return;
+        }
+
+        var info = PrefabInfo.WithTechType("AbyssalEcologies_lantern_skate_egg", "Lantern Skate Egg", "A ribbed blue egg pulsing with cold nursery light.").WithIcon(LanternSkatePrototype.EggIcon);
+        var egg = new CustomPrefab(info);
+        _lanternSkateEggRegistrationDetail = $"registered as {info.TechType}; awaiting first instantiation";
+        var template = new EggTemplate(info, sourceEggTechType)
+            .WithHatchingCreature(lanternSkateTechType)
+            .WithHatchingTime(2.25f)
+            .WithMass(3f)
+            .WithMaxHealth(40f)
+            .SetUndiscoveredTechType()
+            .OnModifyPrefab(gameObject =>
+            {
+                if (LanternSkatePrototype.TryReplaceEggVisuals(gameObject, out var detail))
+                    _lanternSkateEggRegistrationDetail = detail;
+                else
+                    _lanternSkateEggRegistrationDetail = $"vanilla egg rollback visual active: {detail}";
+            });
+        egg.SetGameObject(template);
+        egg.CreateCreatureEgg(1).WithRequiredLargeAcuSize(1).SetAcidImmune(true);
+        egg.Register();
+        Plugin.Log.LogInfo("Registered a distinct hatchable Lantern Skate egg with an original procedural shell on the proven Jellyray egg gameplay shell.");
     }
 
     private static SpawnLocation ToSpawnLocation(string contentId, GeneratedPlacement placement)

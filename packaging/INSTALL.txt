@@ -1,4 +1,4 @@
-Abyssal Ecologies 0.10.0
+Abyssal Ecologies 0.11.0
 
 Requirements:
 - Original Subnautica (2018), current non-Legacy desktop branch
@@ -19,6 +19,7 @@ Install:
 11. Run `goto ae2`, wait for Glassfin to stream, and run `ae_fauna`. Require the original-fauna prototype to be enabled and registered with at least one active instance. Inspect its cyan body, tail, side fins, facial filter fans, animation, and low-speed feeding display. Scan one to unlock the Glassfin databank entry, then run `ae_perf`.
 12. Save, fully restart, revisit AE2, and repeat `ae_fauna` and `ae_perf`. If an Alien Containment Unit is available, also verify that a Glassfin egg is accepted and hatches. Set `Fauna.UseOriginalGlassfinPrototype=false` only when testing the Peeper-derived rollback visual.
 13. Run `goto ae1`, wait 12 seconds, and run `ae_fauna`. Inspect the original Cinder Ray's broad manta body, flapping wings, tail, and thermal pulse; scan it for the Cinder Ray databank entry. Run `item AbyssalEcologies_cinder_ray_egg` to inspect its distinct egg, then run `ae_perf`. Use `Fauna.UseOriginalCinderRayPrototype=false` only for the Rabbit Ray-derived rollback visual.
+14. Run `goto ae3`, wait 12 seconds, and run `ae_fauna`. Inspect the original Lantern Skate's blue kite body, drifting veils, paired light ribbons, and cold-light pulse; scan it for the Lantern Skate databank entry. Run `item AbyssalEcologies_lantern_skate_egg` to inspect its distinct egg, then run `ae_perf`. Use `Fauna.UseOriginalLanternSkatePrototype=false` only for the Jellyray-derived rollback visual.
 
 The seed-58 lifecycle procedure above passed on 2026-09-26, including unload/revisit and a fresh-process recreation. The fresh-process run created exactly one seamount, grounded the Glass Arch with 9/9 hits, 0.10 metres of relief, and a 1.7-degree maximum support slope, and passed `ae_perf` at 18.3 ms setup, 6.1 ms registration, +0.89 MiB, and 123/123 placements.
 
@@ -26,7 +27,7 @@ The Glassfin functional procedure passed on 2026-09-26, including visible origin
 
 The Cinder Ray functional procedure passed on 2026-09-26, including the visible original manta, scanning/databank unlock, distinct egg creation, and save/full-restart persistence. The fresh process reported 24 active Cinder Rays, the procedural faceted egg shell, and `ae_perf` at 18.1 ms setup, 6.1 ms registration, +0.27 MiB, and 123/123 placements. Containment hatching and final visual polish remain pending.
 
-Restart Subnautica before switching to a different save slot. Version 0.10.0 refuses to mix two per-save manifests in one running game process.
+Restart Subnautica before switching to a different save slot. Version 0.11.0 refuses to mix two per-save manifests in one running game process.
 
 Disposable-save regeneration is deliberately restart-only. `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION` first writes a timestamped byte-for-byte backup under `BepInEx/config/AbyssalEcologies/manifest-backups`, then stages the new deterministic layout in Subnautica's live save cache. The active world does not change until the game is saved, fully quit, and restarted. The command rejects missing confirmation, the active seed, and a second regeneration in the same process.
 
@@ -34,7 +35,7 @@ Temporary removal warning:
 - Back up the save and fully quit before removing the two Abyssal Ecologies DLLs.
 - A save can load temporarily without the mod, but Subnautica logs missing-prefab errors for saved custom instances.
 - Do not save while the mod is missing. Quit and restore the exact DLLs before continuing.
-- Permanent uninstall is not supported or validated in version 0.10.0.
+- Permanent uninstall is not supported or validated in version 0.11.0.
 
 Configuration is created at:
 BepInEx/config/rocks.verburgt.subnautica.abyssalecologies.cfg

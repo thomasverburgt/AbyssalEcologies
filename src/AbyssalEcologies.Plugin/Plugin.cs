@@ -17,7 +17,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string Guid = "rocks.verburgt.subnautica.abyssalecologies";
     public const string Name = "Abyssal Ecologies";
-    public const string Version = "0.10.0";
+    public const string Version = "0.11.0";
 
     internal static ManualLogSource Log { get; private set; } = null!;
 
@@ -38,6 +38,8 @@ public sealed class Plugin : BaseUnityPlugin
             ContentRegistrar.ConfigureOriginalGlassfin(originalGlassfin.Value);
             var originalCinderRay = Config.Bind("Fauna", "UseOriginalCinderRayPrototype", true, "Use the original procedural Cinder Ray model, animation, icon, call, scanner entry, and egg. Disable to retain the Rabbit Ray-derived rollback visual.");
             ContentRegistrar.ConfigureOriginalCinderRay(originalCinderRay.Value);
+            var originalLanternSkate = Config.Bind("Fauna", "UseOriginalLanternSkatePrototype", true, "Use the original procedural Lantern Skate model, animation, icon, call, scanner entry, and egg. Disable to retain the Jellyray-derived rollback visual.");
+            ContentRegistrar.ConfigureOriginalLanternSkate(originalLanternSkate.Value);
             _saveData = SaveDataHandler.RegisterSaveDataCache<AbyssalEcologiesSaveData>();
             var definitionCount = ContentRegistrar.RegisterDefinitions();
             DiagnosticCommands.Register();
