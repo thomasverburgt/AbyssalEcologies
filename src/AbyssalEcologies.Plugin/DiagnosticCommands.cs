@@ -40,7 +40,7 @@ internal static class DiagnosticCommands
     [ConsoleCommand("ae_fauna")]
     public static string Fauna()
     {
-        var result = ContentRegistrar.GetGlassfinStatus();
+        var result = ContentRegistrar.GetFaunaStatus();
         Plugin.Log.LogInfo(result);
         return result;
     }

@@ -58,6 +58,9 @@ internal static class ContentRegistrar
     private static bool _useOriginalGlassfin = true;
     private static string _glassfinRegistrationDetail = "not registered";
     private static string _glassfinEggRegistrationDetail = "not registered";
+    private static bool _useOriginalCinderRay = true;
+    private static string _cinderRayRegistrationDetail = "not registered";
+    private static string _cinderRayEggRegistrationDetail = "not registered";
 
     private static readonly ContentDefinition[] Definitions =
     {
@@ -91,13 +94,16 @@ internal static class ContentRegistrar
     }
 
     public static void ConfigureOriginalGlassfin(bool enabled) => _useOriginalGlassfin = enabled;
+    public static void ConfigureOriginalCinderRay(bool enabled) => _useOriginalCinderRay = enabled;
 
-    public static string GetGlassfinStatus()
+    public static string GetFaunaStatus()
     {
         var registered = RegisteredTechTypes.ContainsKey("glassfin") ? "yes" : "no";
         var controllers = UnityEngine.Object.FindObjectsOfType<GlassfinPrototypeController>();
         var feeding = controllers.Count(controller => controller.IsFeeding);
-        return $"AE Glassfin prototype: enabled={_useOriginalGlassfin}, registered={registered}, active={controllers.Length}, filterFeeding={feeding}, callsPlayed={GlassfinPrototypeController.CallCount}, assets={_glassfinRegistrationDetail}, egg={_glassfinEggRegistrationDetail}.";
+        var cinderRegistered = RegisteredTechTypes.ContainsKey("cinder-ray") ? "yes" : "no";
+        var cinderControllers = UnityEngine.Object.FindObjectsOfType<CinderRayPrototypeController>();
+        return $"AE Glassfin prototype: enabled={_useOriginalGlassfin}, registered={registered}, active={controllers.Length}, filterFeeding={feeding}, callsPlayed={GlassfinPrototypeController.CallCount}, assets={_glassfinRegistrationDetail}, egg={_glassfinEggRegistrationDetail}.\nAE Cinder Ray prototype: enabled={_useOriginalCinderRay}, registered={cinderRegistered}, active={cinderControllers.Length}, callsPlayed={CinderRayPrototypeController.CallCount}, assets={_cinderRayRegistrationDetail}, egg={_cinderRayEggRegistrationDetail}.";
     }
 
     public static SpawnRegistrationMetrics RegisterWorldSpawns(GeneratedWorld world)
@@ -199,8 +205,11 @@ internal static class ContentRegistrar
     {
         var classId = $"AbyssalEcologies_{definition.Id.Replace('-', '_')}";
         var originalGlassfin = _useOriginalGlassfin && string.Equals(definition.Id, "glassfin", StringComparison.Ordinal);
+        var originalCinderRay = _useOriginalCinderRay && string.Equals(definition.Id, "cinder-ray", StringComparison.Ordinal);
         var prefab = originalGlassfin
             ? new CustomPrefab(classId, definition.DisplayName, definition.Description, GlassfinPrototype.Icon)
+            : originalCinderRay
+                ? new CustomPrefab(classId, definition.DisplayName, definition.Description, CinderRayPrototype.Icon)
             : new CustomPrefab(classId, definition.DisplayName, definition.Description);
         var template = new CloneTemplate(prefab.Info, sourceTechType)
         {
@@ -208,7 +217,16 @@ internal static class ContentRegistrar
             {
                 ApplyAppearance(gameObject, definition);
                 if (!originalGlassfin)
+                {
+                    if (originalCinderRay)
+                    {
+                        if (CinderRayPrototype.TryReplaceVisuals(gameObject, out var cinderDetail))
+                            _cinderRayRegistrationDetail = cinderDetail;
+                        else
+                            _cinderRayRegistrationDetail = $"Rabbit Ray rollback visual active: {cinderDetail}";
+                    }
                     return;
+                }
 
                 if (GlassfinPrototype.TryReplaceVisuals(gameObject, out var detail))
                     _glassfinRegistrationDetail = detail;
@@ -235,12 +253,33 @@ internal static class ContentRegistrar
                 PDAHandler.AddCustomScannerEntry(prefab.Info.TechType, 4f, false, encyclopediaKey);
             });
         }
+        if (originalCinderRay)
+        {
+            const string encyclopediaKey = "AbyssalEcologiesCinderRay";
+            prefab.AddOnRegister(() =>
+            {
+                PDAHandler.AddEncyclopediaEntry(
+                    encyclopediaKey,
+                    "Lifeforms/Fauna/Herbivores",
+                    "Cinder Ray",
+                    "A broad-winged geothermal grazer whose mineral membranes store and release heat as visible pulses. It circles vent-fed colonies and is non-aggressive unless disturbed.",
+                    CinderRayPrototype.EncyclopediaTexture,
+                    CinderRayPrototype.Icon,
+                    PDAHandler.UnlockBasic,
+                    null);
+                PDAHandler.AddCustomScannerEntry(prefab.Info.TechType, 5f, false, encyclopediaKey);
+            });
+        }
         prefab.Register();
         RegisteredTechTypes.Add(definition.Id, prefab.Info.TechType);
         if (originalGlassfin)
             RegisterGlassfinEgg(prefab.Info.TechType);
+        if (originalCinderRay)
+            RegisterCinderRayEgg(prefab.Info.TechType);
         Plugin.Log.LogInfo(originalGlassfin
             ? $"Registered '{definition.Id}' with original procedural visuals/audio, scanner entry, and hatchable egg on the proven '{definition.SourceTechType}' gameplay shell."
+            : originalCinderRay
+                ? $"Registered '{definition.Id}' with original procedural visuals/audio, scanner entry, and hatchable egg on the proven '{definition.SourceTechType}' gameplay shell."
             : $"Registered '{definition.Id}' definition from proven source TechType '{definition.SourceTechType}'.");
     }
 
@@ -280,6 +319,37 @@ internal static class ContentRegistrar
             .SetAcidImmune(true);
         egg.Register();
         Plugin.Log.LogInfo("Registered a distinct hatchable Glassfin egg with an original procedural shell on the proven Rabbit Ray egg gameplay shell.");
+    }
+
+    private static void RegisterCinderRayEgg(TechType cinderRayTechType)
+    {
+        if (!Enum.TryParse("JellyrayEgg", ignoreCase: false, out TechType sourceEggTechType))
+        {
+            _cinderRayEggRegistrationDetail = "rollback: JellyrayEgg source is unavailable";
+            Plugin.Log.LogWarning("Cinder Ray egg registration skipped because the JellyrayEgg TechType is unavailable in this game build.");
+            return;
+        }
+
+        var info = PrefabInfo.WithTechType("AbyssalEcologies_cinder_ray_egg", "Cinder Ray Egg", "A faceted egg radiating a low geothermal glow.").WithIcon(CinderRayPrototype.EggIcon);
+        var egg = new CustomPrefab(info);
+        _cinderRayEggRegistrationDetail = $"registered as {info.TechType}; awaiting first instantiation";
+        var template = new EggTemplate(info, sourceEggTechType)
+            .WithHatchingCreature(cinderRayTechType)
+            .WithHatchingTime(2f)
+            .WithMass(4f)
+            .WithMaxHealth(45f)
+            .SetUndiscoveredTechType()
+            .OnModifyPrefab(gameObject =>
+            {
+                if (CinderRayPrototype.TryReplaceEggVisuals(gameObject, out var detail))
+                    _cinderRayEggRegistrationDetail = detail;
+                else
+                    _cinderRayEggRegistrationDetail = $"vanilla egg rollback visual active: {detail}";
+            });
+        egg.SetGameObject(template);
+        egg.CreateCreatureEgg(1).WithRequiredLargeAcuSize(1).SetAcidImmune(true);
+        egg.Register();
+        Plugin.Log.LogInfo("Registered a distinct hatchable Cinder Ray egg with an original procedural shell on the proven Jellyray egg gameplay shell.");
     }
 
     private static SpawnLocation ToSpawnLocation(string contentId, GeneratedPlacement placement)

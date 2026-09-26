@@ -2,11 +2,11 @@
 
 Abyssal Ecologies is an experimental mod for the original **Subnautica (2018)** that adds deterministic, procedurally arranged **micro-biomes** to the base game's world. It is not for Subnautica 2 or Subnautica: Below Zero. A generation seed selects region positions, species variants, environmental clusters, and a central landmark. The same seed always produces the same layout.
 
-The current `0.9.0` vertical slice begins the original-fauna milestone. Glassfin now has a code-generated original model, articulated appendage rig, procedural skin and icon, feeding-cycle animation, synthesized filter call, PDA scan entry, and hatchable egg. Its locomotion and persistence still use a Peeper-derived gameplay shell while the new creature pipeline is field-tested; Cinder Ray and Lantern Skate remain recolored placeholder clones. The mod does **not** modify Subnautica's terrain mesh or biome lookup table.
+The current `0.10.0` vertical slice continues the original-fauna milestone. Glassfin is functionally validated, and Cinder Ray now has a code-generated original manta model, articulated wing/tail rig, thermal-pulse animation, generated icon, synthesized call, PDA scan entry, and distinct hatchable egg. Their locomotion and persistence still use proven vanilla gameplay shells while the creature pipeline is field-tested; Lantern Skate remains a recolored placeholder clone. The mod does **not** modify Subnautica's terrain mesh or biome lookup table.
 
 ## Project status
 
-**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. Version 0.9.0 retains the field-validated schema-3 migration, performance, boundary, durable-regeneration, and 0.8.9 grounding model while adding the first original Glassfin prototype. It never requests remote terrain batches or modifies Subnautica's baked terrain. Existing schema-1 deterministic and schema-2 terrain-resolved manifests migrate without moving saved coordinates; exclusions introduced after a legacy layout was created remain compatibility warnings. Full manifest-wide terrain resolution remains unresolved because both tested remote batch-loading paths destabilized Subnautica's late-load phase.
+**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. Version 0.10.0 retains the validated schema-3, regeneration, performance, grounding, and Glassfin behavior while adding the Cinder Ray prototype. It never requests remote terrain batches or modifies Subnautica's baked terrain. Existing schema-1 deterministic and schema-2 terrain-resolved manifests migrate without moving saved coordinates; exclusions introduced after a legacy layout was created remain compatibility warnings.
 
 Version 0.3.2 passed its representative in-game regression on 2026-09-24: initial load, all three regions, all flora/fauna/landmarks, the Thermal Spire, save, full restart, reload, and revisit.
 
@@ -29,7 +29,7 @@ Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md]
 ## What is implemented
 
 - Three generated region archetypes: Glass Kelp Garden, Ember Trench, and Ghostlight Nursery.
-- One original procedural Glassfin prototype, two placeholder animal species, three flora variants, and three central landmarks.
+- Two original procedural fauna prototypes, one placeholder animal species, three flora variants, and three central landmarks.
 - Glassfin PDA scanning, encyclopedia entry, icon, synthesized spatial call, hatchable egg, and a low-speed filter-feeding display that does not override the proven locomotion shell.
 - Seeded PCG random generation that is stable across .NET and Unity versions.
 - Configurable region count, world radius, depth range, and separation.
@@ -83,11 +83,13 @@ For the 0.9.0 Glassfin field test, load the disposable seed-58 save and run `got
 
 That procedure passed for the model, scanner/databank, egg creation, save/restart persistence, and performance. Containment hatching time and final visual polish remain outside the accepted 0.9.0 functional gate.
 
+For the 0.10.0 Cinder Ray field test, run `goto ae1`, wait 12 seconds, and run `ae_fauna`. Require the Cinder Ray line to report `enabled=True`, `registered=yes`, and at least one active instance. Confirm a broad dark-red manta silhouette, independently flapping wings, long articulated tail, and pulsing ember material; scan one and confirm the **Cinder Ray** databank entry. Run `item AbyssalEcologies_cinder_ray_egg` and inspect the faceted glowing egg, then run `ae_perf`. Save/restart persistence remains the acceptance gate.
+
 Do not use this prototype on the only copy of an important save. The 0.3.2 layout passed representative in-game inspection, but terrain-aware placement and permanent uninstall remain incomplete.
 
 Temporary removal is recoverable only with care: fully quit, back up the save, quarantine the two Abyssal Ecologies DLLs, and expect missing-prefab errors while the save is loaded without the mod. Do not save in that state. Quit and restore the exact plugin DLLs before continuing; version 0.7.1 restored the unchanged manifest and generated content in the isolated field test. Permanent uninstall remains unsupported.
 
-Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.9.0 safely refuses to mix a second manifest into the active session and stages regeneration only for the next process.
+Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.10.0 safely refuses to mix a second manifest into the active session and stages regeneration only for the next process.
 
 ## Isolated Windows test launcher
 

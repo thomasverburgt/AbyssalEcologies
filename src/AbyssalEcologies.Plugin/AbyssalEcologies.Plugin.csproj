@@ -3,7 +3,7 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>AbyssalEcologies</AssemblyName>
     <RootNamespace>AbyssalEcologies.Plugin</RootNamespace>
-    <Version>0.9.0</Version>
+    <Version>0.10.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RestoreAdditionalProjectSources>https://api.nuget.org/v3/index.json;https://nuget.bepinex.dev/v3/index.json</RestoreAdditionalProjectSources>
   </PropertyGroup>
