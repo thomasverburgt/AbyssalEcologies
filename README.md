@@ -2,11 +2,11 @@
 
 Abyssal Ecologies is an experimental mod for the original **Subnautica (2018)** that adds deterministic, procedurally arranged **micro-biomes** to the base game's world. It is not for Subnautica 2 or Subnautica: Below Zero. A generation seed selects region positions, species variants, environmental clusters, and a central landmark. The same seed always produces the same layout.
 
-The current `0.8.9` vertical slice is intentionally asset-light: it clones, recolors, and rescales base-game prefabs to prove the world-generation and Nautilus registration pipeline. It does **not** modify Subnautica's terrain mesh or biome lookup table, and the placeholder species do not yet have unique models, sounds, eggs, scan entries, or AI.
+The current `0.9.0` vertical slice begins the original-fauna milestone. Glassfin now has a code-generated original model, articulated appendage rig, procedural skin and icon, feeding-cycle animation, synthesized filter call, PDA scan entry, and hatchable egg. Its locomotion and persistence still use a Peeper-derived gameplay shell while the new creature pipeline is field-tested; Cinder Ray and Lantern Skate remain recolored placeholder clones. The mod does **not** modify Subnautica's terrain mesh or biome lookup table.
 
 ## Project status
 
-**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. Version 0.8.9 retains the field-validated schema-3 migration, performance, boundary, and durable-regeneration model while adding an additive generated seamount beneath the void-centered Glass Kelp Garden. It never requests remote terrain batches or modifies Subnautica's baked terrain. Existing schema-1 deterministic and schema-2 terrain-resolved manifests migrate without moving saved coordinates; exclusions introduced after a legacy layout was created remain compatibility warnings. Full manifest-wide terrain resolution remains unresolved because both tested remote batch-loading paths destabilized Subnautica's late-load phase.
+**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. Version 0.9.0 retains the field-validated schema-3 migration, performance, boundary, durable-regeneration, and 0.8.9 grounding model while adding the first original Glassfin prototype. It never requests remote terrain batches or modifies Subnautica's baked terrain. Existing schema-1 deterministic and schema-2 terrain-resolved manifests migrate without moving saved coordinates; exclusions introduced after a legacy layout was created remain compatibility warnings. Full manifest-wide terrain resolution remains unresolved because both tested remote batch-loading paths destabilized Subnautica's late-load phase.
 
 Version 0.3.2 passed its representative in-game regression on 2026-09-24: initial load, all three regions, all flora/fauna/landmarks, the Thermal Spire, save, full restart, reload, and revisit.
 
@@ -27,7 +27,8 @@ Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md]
 ## What is implemented
 
 - Three generated region archetypes: Glass Kelp Garden, Ember Trench, and Ghostlight Nursery.
-- Three placeholder animal species, three flora variants, and three central landmarks.
+- One original procedural Glassfin prototype, two placeholder animal species, three flora variants, and three central landmarks.
+- Glassfin PDA scanning, encyclopedia entry, icon, synthesized spatial call, hatchable egg, and a low-speed filter-feeding display that does not override the proven locomotion shell.
 - Seeded PCG random generation that is stable across .NET and Unity versions.
 - Configurable region count, world radius, depth range, and separation.
 - A canonical schema-3 per-save manifest loaded before the layout is registered with Nautilus coordinated spawns.
@@ -76,11 +77,13 @@ For the 0.7.1 field test, run `ae_boundaries 90` and inspect the bright radius r
 
 Version 0.8.9 passed its lifecycle test by running `goto ae2`, waiting for streaming, and requiring `ae_grounding` to report the Glass Arch `GROUNDED` with 9/9 support hits. The seamount remained while the Glass Arch unloaded, no duplicate appeared after returning to AE2, the Prism Kelp and arch remained seated, and `ae_perf` passed before and after the trip. A full process restart recreated exactly one seamount. The fresh-process report measured 18.3 ms late setup, 6.1 ms spawn registration, +0.89 MiB managed memory, and 123/123 registered placements.
 
+For the 0.9.0 Glassfin field test, load the disposable seed-58 save and run `goto ae2`. After the Glass Kelp Garden streams, require `ae_fauna` to report `enabled=True`, `registered=yes`, and at least one active Glassfin. Visually confirm the cyan original body, forked tail, paired side fins, and two facial filter fans; observe tail/fin motion and the wider fan display when a fish slows. Scan one Glassfin and confirm its **Glassfin** databank entry. Use an Alien Containment Unit only if convenient to verify that the generated egg is accepted and hatches. Run `ae_perf`, save, fully restart, return to AE2, and confirm the model, scan state, movement, and performance remain intact. Set `Fauna.UseOriginalGlassfinPrototype=false` only to exercise the Peeper-derived rollback visual.
+
 Do not use this prototype on the only copy of an important save. The 0.3.2 layout passed representative in-game inspection, but terrain-aware placement and permanent uninstall remain incomplete.
 
 Temporary removal is recoverable only with care: fully quit, back up the save, quarantine the two Abyssal Ecologies DLLs, and expect missing-prefab errors while the save is loaded without the mod. Do not save in that state. Quit and restore the exact plugin DLLs before continuing; version 0.7.1 restored the unchanged manifest and generated content in the isolated field test. Permanent uninstall remains unsupported.
 
-Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.8.9 safely refuses to mix a second manifest into the active session and stages regeneration only for the next process.
+Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.9.0 safely refuses to mix a second manifest into the active session and stages regeneration only for the next process.
 
 ## Isolated Windows test launcher
 

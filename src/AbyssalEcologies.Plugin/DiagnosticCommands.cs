@@ -35,7 +35,15 @@ internal static class DiagnosticCommands
 
     [ConsoleCommand("ae_help")]
     public static string Help() =>
-        "Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_boundaries [10-300 seconds]; ae_boundaries_off; ae_validate; ae_perf; ae_grounding; ae_probe REGION; ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION; goto ae1/ae2/ae3.";
+        "Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_boundaries [10-300 seconds]; ae_boundaries_off; ae_validate; ae_perf; ae_fauna; ae_grounding; ae_probe REGION; ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION; goto ae1/ae2/ae3.";
+
+    [ConsoleCommand("ae_fauna")]
+    public static string Fauna()
+    {
+        var result = ContentRegistrar.GetGlassfinStatus();
+        Plugin.Log.LogInfo(result);
+        return result;
+    }
 
     [ConsoleCommand("ae_manifest")]
     public static string Manifest()

@@ -23,9 +23,9 @@ The repository currently provides:
 
 The solution builds with zero warnings. The checks cover 100 seeds, static protected areas, deterministic replacement searches, coordinate-preserving schema migration, byte-stable schema-3 round trips, incompatible-schema rejection, world diagnostics, performance-budget pass/fail behavior, and guarded manifest regeneration. Version 0.5.1 passed its migration/save/restart field test with the same seed and all 123 placements. Version 0.6.0 passed its bounded late-setup, registration, managed-memory, placement-count, instantiation-callback, live-object, unload, and full-restart field test. Version 0.7.1 passed durable regeneration, boundaries, validation, performance, regenerated content, and temporary-removal recovery. Seed 58 passed fauna, collision, and escape-path inspection but its landmarks floated. Version 0.8.4's level foundations passed AE1 and AE3 with 9/9 terrain hits. Version 0.8.8's AE2 seamount initially grounded the arch at 9/9 with 0.10 metres of relief and passed performance, but its landmark-owned lifetime destroyed the landform while 16 outer objects remained loaded. Version 0.8.9 passed unload, revisit, duplicate-prevention, and fresh-process recreation validation on 2026-09-26. The fresh-process AE2 report retained 9/9 support hits, 0.10 metres of relief, and a 1.7-degree maximum support slope while `ae_perf` passed at 18.3 ms setup, 6.1 ms registration, +0.89 MiB, and 123/123 placements.
 
-## Active milestone: terrain-aware save manifests
+## Validated platform milestone: terrain-aware save manifests
 
-This is the critical path. Original art and expanded content remain blocked until generated layouts can be placed, persisted, inspected, and migrated safely.
+The representative seed-58 platform path is accepted for incremental content work. Its schema, regeneration, performance, grounding, and recovery behavior remain regression gates; the broader 100-seed in-game inspection remains a release gate rather than a blocker for the isolated original-fauna prototype.
 
 | Priority | Work item | Deliverable | Acceptance evidence |
 | --- | --- | --- | --- |
@@ -56,6 +56,8 @@ Milestone 1 is complete only when all of the following are true:
 ### Original fauna
 
 Replace placeholder clones with licensed original meshes, rigs, textures, animations, sounds, icons, eggs, scan entries, and bounded AI. Each animal needs an ecological role, containment behavior, spawn budget, and save/load test.
+
+Version 0.9.0 begins this milestone with Glassfin. Its mesh, articulated appendages, procedural skin/icon, feeding animation, and synthesized call are generated entirely by project-owned code. A Peeper-derived shell remains temporarily responsible for locomotion and save integration, and a configuration switch preserves the prior visual as a rollback until field validation passes.
 
 ### Biome identity
 
@@ -93,4 +95,4 @@ Passing automated checks or reaching the main menu is not sufficient evidence of
 
 ## Immediate next increment
 
-Begin the first original-fauna vertical slice without changing the validated schema-3 layout or 0.8.9 grounding behavior. Replace one placeholder animal with a licensed original mesh, texture, rig, animation set, sound set, icon, egg, and scanner entry; give it one bounded ecological behavior and explicit spawn/performance limits. Retain the existing placeholder as a rollback path until registration, containment, save/reload, streaming, and performance tests pass in the isolated test copy.
+Field-test the 0.9.0 Glassfin vertical slice without changing the validated schema-3 layout or 0.8.9 grounding behavior. Require the original procedural model, texture, articulated animation, synthesized call, icon, egg, scanner entry, and low-speed filter-feeding display to register without errors. Validate AE2 streaming, visual identity, scanner/databank behavior, performance, save/reload persistence, and—if an Alien Containment Unit is available—egg acceptance and hatching. The `Fauna.UseOriginalGlassfinPrototype=false` configuration switch must retain the Peeper-derived rollback visual until this gate passes.

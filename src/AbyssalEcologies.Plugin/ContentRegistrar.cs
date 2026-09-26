@@ -55,6 +55,8 @@ internal static class ContentRegistrar
     private static readonly List<LandmarkSitePlan> LandmarkSitePlans = new();
     private static GameObject? _glassKelpSeamount;
     private static int _registeredPlacementCount;
+    private static bool _useOriginalGlassfin = true;
+    private static string _glassfinRegistrationDetail = "not registered";
 
     private static readonly ContentDefinition[] Definitions =
     {
@@ -85,6 +87,16 @@ internal static class ContentRegistrar
         }
 
         return RegisteredTechTypes.Count;
+    }
+
+    public static void ConfigureOriginalGlassfin(bool enabled) => _useOriginalGlassfin = enabled;
+
+    public static string GetGlassfinStatus()
+    {
+        var registered = RegisteredTechTypes.ContainsKey("glassfin") ? "yes" : "no";
+        var controllers = UnityEngine.Object.FindObjectsOfType<GlassfinPrototypeController>();
+        var feeding = controllers.Count(controller => controller.IsFeeding);
+        return $"AE Glassfin prototype: enabled={_useOriginalGlassfin}, registered={registered}, active={controllers.Length}, filterFeeding={feeding}, callsPlayed={GlassfinPrototypeController.CallCount}, assets={_glassfinRegistrationDetail}.";
     }
 
     public static SpawnRegistrationMetrics RegisterWorldSpawns(GeneratedWorld world)
@@ -185,16 +197,51 @@ internal static class ContentRegistrar
     private static void RegisterDefinition(ContentDefinition definition, TechType sourceTechType)
     {
         var classId = $"AbyssalEcologies_{definition.Id.Replace('-', '_')}";
-        var prefab = new CustomPrefab(classId, definition.DisplayName, definition.Description);
+        var originalGlassfin = _useOriginalGlassfin && string.Equals(definition.Id, "glassfin", StringComparison.Ordinal);
+        var prefab = originalGlassfin
+            ? new CustomPrefab(classId, definition.DisplayName, definition.Description, GlassfinPrototype.Icon)
+            : new CustomPrefab(classId, definition.DisplayName, definition.Description);
         var template = new CloneTemplate(prefab.Info, sourceTechType)
         {
-            ModifyPrefab = gameObject => ApplyAppearance(gameObject, definition)
+            ModifyPrefab = gameObject =>
+            {
+                ApplyAppearance(gameObject, definition);
+                if (!originalGlassfin)
+                    return;
+
+                if (GlassfinPrototype.TryReplaceVisuals(gameObject, out var detail))
+                    _glassfinRegistrationDetail = detail;
+                else
+                    _glassfinRegistrationDetail = $"Peeper rollback visual active because original construction failed: {detail}";
+            }
         };
 
         prefab.SetGameObject(template);
+        if (originalGlassfin)
+        {
+            const string encyclopediaKey = "AbyssalEcologiesGlassfin";
+            prefab.CreateCreatureEgg(1)
+                .WithRequiredLargeAcuSize(1)
+                .SetAcidImmune(true);
+            prefab.AddOnRegister(() =>
+            {
+                PDAHandler.AddEncyclopediaEntry(
+                    encyclopediaKey,
+                    "Lifeforms/Fauna/Herbivores",
+                    "Glassfin",
+                    "A small shoaling filter-feeder whose paired facial fans strain plankton from water moving through Prism Kelp. Its transparent mineral plates pulse while feeding. Assessment: edible only in an emergency; ecological value is greater than nutritional value.",
+                    GlassfinPrototype.EncyclopediaTexture,
+                    GlassfinPrototype.Icon,
+                    PDAHandler.UnlockBasic,
+                    null);
+                PDAHandler.AddCustomScannerEntry(prefab.Info.TechType, 4f, false, encyclopediaKey);
+            });
+        }
         prefab.Register();
         RegisteredTechTypes.Add(definition.Id, prefab.Info.TechType);
-        Plugin.Log.LogInfo($"Registered '{definition.Id}' definition from proven source TechType '{definition.SourceTechType}'.");
+        Plugin.Log.LogInfo(originalGlassfin
+            ? $"Registered '{definition.Id}' with original procedural visuals/audio, scanner entry, and hatchable egg on the proven '{definition.SourceTechType}' gameplay shell."
+            : $"Registered '{definition.Id}' definition from proven source TechType '{definition.SourceTechType}'.");
     }
 
     private static SpawnLocation ToSpawnLocation(string contentId, GeneratedPlacement placement)
