@@ -27,6 +27,8 @@ The Glassfin functional procedure passed on 2026-09-26, including visible origin
 
 The Cinder Ray functional procedure passed on 2026-09-26, including the visible original manta, scanning/databank unlock, distinct egg creation, and save/full-restart persistence. The fresh process reported 24 active Cinder Rays, the procedural faceted egg shell, and `ae_perf` at 18.1 ms setup, 6.1 ms registration, +0.27 MiB, and 123/123 placements. Containment hatching and final visual polish remain pending.
 
+The Lantern Skate functional procedure passed on 2026-09-26, including the visible original kite, scanning/databank unlock, distinct egg creation, and save/full-restart persistence. The fresh process reported 22 active Lantern Skates, the ribbed blue lantern egg shell, and `ae_perf` at 18.0 ms setup, 5.9 ms registration, +0.86 MiB, and 123/123 placements. Containment hatching and final visual polish remain pending.
+
 Restart Subnautica before switching to a different save slot. Version 0.11.0 refuses to mix two per-save manifests in one running game process.
 
 Disposable-save regeneration is deliberately restart-only. `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION` first writes a timestamped byte-for-byte backup under `BepInEx/config/AbyssalEcologies/manifest-backups`, then stages the new deterministic layout in Subnautica's live save cache. The active world does not change until the game is saved, fully quit, and restarted. The command rejects missing confirmation, the active seed, and a second regeneration in the same process.
