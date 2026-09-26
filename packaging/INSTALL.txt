@@ -21,6 +21,8 @@ Install:
 
 The seed-58 lifecycle procedure above passed on 2026-09-26, including unload/revisit and a fresh-process recreation. The fresh-process run created exactly one seamount, grounded the Glass Arch with 9/9 hits, 0.10 metres of relief, and a 1.7-degree maximum support slope, and passed `ae_perf` at 18.3 ms setup, 6.1 ms registration, +0.89 MiB, and 123/123 placements.
 
+The Glassfin functional procedure passed on 2026-09-26, including visible original assets, scanning/databank unlock, distinct egg creation, save/full-restart persistence, and `ae_perf` at 18.0 ms setup, 6.0 ms registration, +0.86 MiB, and 123/123 placements. These creature and egg visuals are prototype-grade, not final polished art. Egg hatching in containment remains pending.
+
 Restart Subnautica before switching to a different save slot. Version 0.9.0 refuses to mix two per-save manifests in one running game process.
 
 Disposable-save regeneration is deliberately restart-only. `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION` first writes a timestamped byte-for-byte backup under `BepInEx/config/AbyssalEcologies/manifest-backups`, then stages the new deterministic layout in Subnautica's live save cache. The active world does not change until the game is saved, fully quit, and restarted. The command rejects missing confirmation, the active seed, and a second regeneration in the same process.

@@ -23,9 +23,9 @@ Exit gate: at least 100 seed runs produce no floating flora, buried landmarks, b
 
 ## Milestone 2 — original animals
 
-- Replace the three clone placeholders with licensed original meshes, textures, rigs, animations, sounds, icons, and eggs. *(Glassfin procedural original assets implemented for 0.9.0 field testing; Cinder Ray and Lantern Skate remain placeholders)*
+- Replace the three clone placeholders with licensed original meshes, textures, rigs, animations, sounds, icons, and eggs. *(Glassfin procedural original assets functionally field-validated in 0.9.0; its art remains prototype-grade, and Cinder Ray/Lantern Skate remain placeholders)*
 - Give each species a distinct ecological role and bounded AI state machine. *(Glassfin low-speed filter-feeding display implemented without overriding its temporary proven locomotion shell)*
-- Add scanner entries, encyclopedia text, animation/audio budgets, containment behavior, and breeding rules. *(Glassfin scanner, databank entry, spatial call, and hatchable egg implemented for 0.9.0 field testing)*
+- Add scanner entries, encyclopedia text, animation/audio budgets, containment behavior, and breeding rules. *(Glassfin scanner, databank entry, spatial call, distinct egg, persistence, and performance passed the 0.9.0 functional field test; containment hatching remains pending)*
 - Profile schools and large creatures independently.
 
 Exit gate: each species has original assets and behavior, scans correctly, survives save/load, and stays inside its performance budget.
