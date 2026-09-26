@@ -17,11 +17,13 @@ internal static class ContentRegistrar
     private const float LandmarkProbeDistance = 520f;
     private const float LandmarkSearchRadius = 144f;
     private const float LandmarkSurfaceOffset = 0.2f;
-    private const float MaximumLandmarkSlope = 18f;
-    private const float MaximumSupportHeightSpread = 0.75f;
+    private const float MaximumFoundationSiteSlope = 65f;
     private const float MaximumLandmarkAdjustment = 260f;
     private const float MinimumSupportHalfExtent = 2.5f;
     private const float MaximumSupportHalfExtent = 14f;
+    private const int MinimumFoundationTerrainHits = 5;
+    private const float MinimumFoundationThickness = 1.5f;
+    private const float MaximumFoundationThickness = 18f;
     private static readonly Vector2[] LandmarkSupportSamples =
     {
         new(0f, 0f),
@@ -238,7 +240,7 @@ internal static class ContentRegistrar
                 continue;
             }
 
-            if (!TryFindLevelSupport(sample, original.y, supportHalfExtents, out var supportHeight, out var heightSpread, out var maximumSlope, out var supportFailure))
+            if (!TryFindFoundationSite(sample, original.y, supportHalfExtents, out var supportHeight, out var heightSpread, out var maximumSlope, out var terrainHits, out var supportFailure))
             {
                 detail = supportFailure;
                 continue;
@@ -268,59 +270,105 @@ internal static class ContentRegistrar
                 ((snapped.x - original.x) * (snapped.x - original.x)) +
                 ((snapped.z - original.z) * (snapped.z - original.z)));
             gameObject.transform.position = snapped;
-            detail = $"vertical={adjustment:+0.0;-0.0;0.0} m, horizontal={horizontalAdjustment:0.0} m, support={supportHalfExtents.x:0.0}x{supportHalfExtents.y:0.0} m half-extents, heightSpread={heightSpread:0.00} m, maxSlope={maximumSlope:0.0} degrees";
+            var foundationThickness = Mathf.Clamp(heightSpread + 1.5f, MinimumFoundationThickness, MaximumFoundationThickness);
+            CreateLevelFoundation(gameObject, contentId, sample, supportHalfExtents, supportHeight, foundationThickness);
+            detail = $"vertical={adjustment:+0.0;-0.0;0.0} m, horizontal={horizontalAdjustment:0.0} m, levelFoundation={supportHalfExtents.x:0.0}x{supportHalfExtents.y:0.0} m half-extents/{foundationThickness:0.0} m thick, terrainHits={terrainHits}/{LandmarkSupportSamples.Length}, terrainRelief={heightSpread:0.00} m, maxTerrainSlope={maximumSlope:0.0} degrees";
             return true;
         }
 
         return false;
     }
 
-    private static bool TryFindLevelSupport(
+    private static bool TryFindFoundationSite(
         WorldPoint candidate,
         float originalY,
         Vector2 supportHalfExtents,
         out float supportHeight,
         out float heightSpread,
         out float maximumSlope,
+        out int terrainHits,
         out string failure)
     {
         supportHeight = float.MinValue;
         var minimumHeight = float.MaxValue;
         maximumSlope = 0f;
         heightSpread = 0f;
+        terrainHits = 0;
         failure = "support footprint has no loaded terrain";
 
-        foreach (var supportSample in LandmarkSupportSamples)
+        for (var index = 0; index < LandmarkSupportSamples.Length; index++)
         {
+            var supportSample = LandmarkSupportSamples[index];
             var x = candidate.X + (supportSample.x * supportHalfExtents.x);
             var z = candidate.Z + (supportSample.y * supportHalfExtents.y);
             var origin = new Vector3(x, originalY + LandmarkProbeHeight, z);
             if (!Physics.Raycast(origin, Vector3.down, out var hit, LandmarkProbeDistance, Voxeland.GetTerrainLayerMask(), QueryTriggerInteraction.Ignore))
             {
-                failure = $"support footprint is missing loaded terrain at offset ({supportSample.x * supportHalfExtents.x:+0.0;-0.0;0.0},{supportSample.y * supportHalfExtents.y:+0.0;-0.0;0.0}) m";
-                return false;
+                if (index == 0)
+                {
+                    failure = "foundation center has no loaded terrain";
+                    return false;
+                }
+
+                continue;
             }
 
             var slope = Vector3.Angle(hit.normal, Vector3.up);
             maximumSlope = Mathf.Max(maximumSlope, slope);
-            if (slope > MaximumLandmarkSlope)
+            if (slope > MaximumFoundationSiteSlope)
             {
-                failure = $"support footprint slope {slope:0.0} exceeds {MaximumLandmarkSlope:0} degrees";
+                failure = $"foundation terrain slope {slope:0.0} exceeds {MaximumFoundationSiteSlope:0} degrees";
                 return false;
             }
 
+            terrainHits++;
             supportHeight = Mathf.Max(supportHeight, hit.point.y);
             minimumHeight = Mathf.Min(minimumHeight, hit.point.y);
         }
 
         heightSpread = supportHeight - minimumHeight;
-        if (heightSpread > MaximumSupportHeightSpread)
+        if (terrainHits < MinimumFoundationTerrainHits)
         {
-            failure = $"support footprint height spread {heightSpread:0.00} exceeds {MaximumSupportHeightSpread:0.00} m";
+            failure = $"foundation footprint has only {terrainHits}/{LandmarkSupportSamples.Length} loaded terrain samples; requires {MinimumFoundationTerrainHits}";
             return false;
         }
 
         return true;
+    }
+
+    private static void CreateLevelFoundation(
+        GameObject landmark,
+        string contentId,
+        WorldPoint site,
+        Vector2 supportHalfExtents,
+        float topHeight,
+        float thickness)
+    {
+        var foundation = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        foundation.name = $"Abyssal Ecologies {contentId} Level Foundation";
+        foundation.layer = landmark.layer;
+        foundation.transform.position = new Vector3(site.X, topHeight - (thickness * 0.5f), site.Z);
+        foundation.transform.rotation = Quaternion.identity;
+        foundation.transform.localScale = new Vector3(
+            supportHalfExtents.x * 2.2f,
+            thickness * 0.5f,
+            supportHalfExtents.y * 2.2f);
+
+        var sourceRenderer = landmark.GetComponentInChildren<Renderer>(true);
+        var foundationRenderer = foundation.GetComponent<Renderer>();
+        if (sourceRenderer != null && sourceRenderer.sharedMaterial != null && foundationRenderer != null)
+        {
+            foundationRenderer.material = new Material(sourceRenderer.sharedMaterial);
+            var material = foundationRenderer.material;
+            if (material.HasProperty("_Color"))
+                material.SetColor("_Color", new Color(0.12f, 0.16f, 0.18f, 1f));
+            if (material.HasProperty("_GlowColor"))
+                material.SetColor("_GlowColor", new Color(0.04f, 0.12f, 0.16f, 1f));
+            if (material.HasProperty("_GlowStrength"))
+                material.SetFloat("_GlowStrength", 0.35f);
+        }
+
+        foundation.transform.SetParent(landmark.transform, true);
     }
 
     private static Vector2 GetLandmarkSupportHalfExtents(GameObject gameObject)
