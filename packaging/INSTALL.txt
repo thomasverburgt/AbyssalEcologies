@@ -17,6 +17,8 @@ Install:
 9. After visiting each region and waiting at least 12 seconds, run `ae_grounding`. Each central landmark should report `GROUNDED`. AE2 should create one collidable 132-metre-radius curved seamount, report 9/9 Glass Arch support hits, and surface-ground all 28 Prism Kelp. Move outside AE2 and return; the session-resident seamount must remain without duplication or floating flora. Confirm `ae_perf` still passes.
 10. If grounding fails, run `ae_probe REGION` while that region is loaded. It reports bounded terrain-mask and all-layer raycast evidence without loading remote cells.
 
+The seed-58 lifecycle procedure above passed on 2026-09-26, including unload/revisit and a fresh-process recreation. The fresh-process run created exactly one seamount, grounded the Glass Arch with 9/9 hits, 0.10 metres of relief, and a 1.7-degree maximum support slope, and passed `ae_perf` at 18.3 ms setup, 6.1 ms registration, +0.89 MiB, and 123/123 placements.
+
 Restart Subnautica before switching to a different save slot. Version 0.8.9 refuses to mix two per-save manifests in one running game process.
 
 Disposable-save regeneration is deliberately restart-only. `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION` first writes a timestamped byte-for-byte backup under `BepInEx/config/AbyssalEcologies/manifest-backups`, then stages the new deterministic layout in Subnautica's live save cache. The active world does not change until the game is saved, fully quit, and restarted. The command rejects missing confirmation, the active seed, and a second regeneration in the same process.
