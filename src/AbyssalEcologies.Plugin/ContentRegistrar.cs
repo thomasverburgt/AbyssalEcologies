@@ -15,6 +15,7 @@ internal static class ContentRegistrar
     private const int InstanceLogLimitPerContent = 3;
     private const float LandmarkProbeHeight = 60f;
     private const float LandmarkProbeDistance = 320f;
+    private const float LandmarkSearchRadius = 72f;
     private const float LandmarkSurfaceOffset = 0.35f;
     private const float MaximumLandmarkSlope = 50f;
     private const float MaximumLandmarkAdjustment = 260f;
@@ -189,7 +190,10 @@ internal static class ContentRegistrar
     private static void LogSuccessfulInstance(string contentId, GameObject gameObject)
     {
         if (LandmarkContentIds.Contains(contentId))
-            GroundLandmark(contentId, gameObject);
+        {
+            var agent = gameObject.GetComponent<LandmarkGroundingAgent>() ?? gameObject.AddComponent<LandmarkGroundingAgent>();
+            agent.Configure(contentId, gameObject.transform.position);
+        }
 
         InstantiationCounts.TryGetValue(contentId, out var totalCount);
         InstantiationCounts[contentId] = totalCount + 1;
@@ -203,36 +207,64 @@ internal static class ContentRegistrar
         Plugin.Log.LogInfo($"Instantiated '{contentId}' at {gameObject.transform.position} (sample {count + 1}/{InstanceLogLimitPerContent}).");
     }
 
-    private static void GroundLandmark(string contentId, GameObject gameObject)
+    internal static bool TryGroundLandmark(string contentId, GameObject gameObject, Vector3 original, out float adjustment, out string detail)
     {
-        var original = gameObject.transform.position;
-        var origin = original + (Vector3.up * LandmarkProbeHeight);
-        if (!Physics.Raycast(origin, Vector3.down, out var hit, LandmarkProbeDistance, Voxeland.GetTerrainLayerMask(), QueryTriggerInteraction.Ignore))
+        adjustment = 0f;
+        detail = "no acceptable loaded terrain surface was found";
+        var stableOffset = LandmarkStableOffset(contentId);
+        var originPoint = new WorldPoint(original.x, original.y, original.z);
+
+        foreach (var sample in PlacementSearchPattern.Around(originPoint, stableOffset, LandmarkSearchRadius))
         {
-            RecordGrounding(contentId, false, 0f, "no loaded terrain surface was found beneath the instance");
-            return;
+            if (WorldProtectionCatalog.TryFindExclusion(sample, 35f, out var areaId))
+            {
+                detail = $"nearest sample is inside protected area '{areaId}'";
+                continue;
+            }
+
+            var origin = new Vector3(sample.X, original.y + LandmarkProbeHeight, sample.Z);
+            if (!Physics.Raycast(origin, Vector3.down, out var hit, LandmarkProbeDistance, Voxeland.GetTerrainLayerMask(), QueryTriggerInteraction.Ignore))
+                continue;
+
+            var slope = Vector3.Angle(hit.normal, Vector3.up);
+            if (slope > MaximumLandmarkSlope)
+            {
+                detail = $"nearest loaded terrain slope {slope:0.0} exceeds {MaximumLandmarkSlope:0} degrees";
+                continue;
+            }
+
+            var snapped = hit.point + (hit.normal * LandmarkSurfaceOffset);
+            adjustment = snapped.y - original.y;
+            if (Mathf.Abs(adjustment) > MaximumLandmarkAdjustment)
+            {
+                detail = $"required vertical adjustment {adjustment:+0.0;-0.0;0.0} m exceeds {MaximumLandmarkAdjustment:0} m";
+                continue;
+            }
+
+            if (TerrainPlacementResolver.IsProtectedBiome(snapped, out var biome))
+            {
+                detail = $"nearest loaded surface is in protected biome '{biome}'";
+                continue;
+            }
+
+            if (TerrainPlacementResolver.HasProtectedWorldObject(snapped, 45f, out var protectedObject))
+            {
+                detail = $"nearest loaded surface is near protected world object '{protectedObject}'";
+                continue;
+            }
+
+            var horizontalAdjustment = Mathf.Sqrt(
+                ((snapped.x - original.x) * (snapped.x - original.x)) +
+                ((snapped.z - original.z) * (snapped.z - original.z)));
+            gameObject.transform.position = snapped;
+            detail = $"vertical={adjustment:+0.0;-0.0;0.0} m, horizontal={horizontalAdjustment:0.0} m, slope={slope:0.0} degrees";
+            return true;
         }
 
-        var slope = Vector3.Angle(hit.normal, Vector3.up);
-        if (slope > MaximumLandmarkSlope)
-        {
-            RecordGrounding(contentId, false, 0f, $"terrain slope {slope:0.0} exceeds {MaximumLandmarkSlope:0} degrees");
-            return;
-        }
-
-        var groundedY = hit.point.y + LandmarkSurfaceOffset;
-        var adjustment = groundedY - original.y;
-        if (Mathf.Abs(adjustment) > MaximumLandmarkAdjustment)
-        {
-            RecordGrounding(contentId, false, adjustment, $"required vertical adjustment {adjustment:+0.0;-0.0;0.0} m exceeds {MaximumLandmarkAdjustment:0} m");
-            return;
-        }
-
-        gameObject.transform.position = new Vector3(original.x, groundedY, original.z);
-        RecordGrounding(contentId, true, adjustment, $"grounded on loaded terrain with slope {slope:0.0} degrees");
+        return false;
     }
 
-    private static void RecordGrounding(string contentId, bool grounded, float adjustment, string detail)
+    internal static void RecordLandmarkGrounding(string contentId, bool grounded, float adjustment, string detail)
     {
         var result = new LandmarkGroundingResult(grounded, adjustment, detail);
         LandmarkGroundingResults[contentId] = result;
@@ -241,6 +273,14 @@ internal static class ContentRegistrar
         else
             Plugin.Log.LogWarning($"Landmark grounding failed for '{contentId}': {detail}; leaving its manifest position unchanged.");
     }
+
+    private static int LandmarkStableOffset(string contentId) => contentId switch
+    {
+        "glass-arch" => 101,
+        "thermal-spire" => 211,
+        "nursery-heart" => 307,
+        _ => 0
+    };
 
     internal sealed class SpawnRegistrationMetrics
     {

@@ -1,4 +1,4 @@
-Abyssal Ecologies 0.8.1
+Abyssal Ecologies 0.8.2
 
 Requirements:
 - Original Subnautica (2018), current non-Legacy desktop branch
@@ -14,10 +14,10 @@ Install:
 6. Check BepInEx/LogOutput.log for manifest status, region coordinates, and sampled prefab instances.
 7. Run `ae_perf` after loading, after `goto ae1`, and after `goto ae2`. The initial budget must pass with 123 registered placements and nine content types; later reports expose cumulative callbacks and currently live custom objects.
 8. Run `ae_boundaries 90` to draw non-colliding region rings and center markers for 90 seconds; use `ae_boundaries_off` to remove them early.
-9. After visiting each region, run `ae_grounding`. Each central landmark should report `GROUNDED` with its local vertical adjustment. Grounding probes only terrain in cells the game has already streamed.
+9. After visiting each region and waiting at least 12 seconds, run `ae_grounding`. Each central landmark should report `GROUNDED`. AE2 may move horizontally by up to 72 metres to find an acceptable loaded surface. Confirm each landmark is supported, upright, not buried, unobstructed, and escapable.
 10. If grounding fails, run `ae_probe REGION` while that region is loaded. It reports bounded terrain-mask and all-layer raycast evidence without loading remote cells.
 
-Restart Subnautica before switching to a different save slot. Version 0.8.1 refuses to mix two per-save manifests in one running game process.
+Restart Subnautica before switching to a different save slot. Version 0.8.2 refuses to mix two per-save manifests in one running game process.
 
 Disposable-save regeneration is deliberately restart-only. `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION` first writes a timestamped byte-for-byte backup under `BepInEx/config/AbyssalEcologies/manifest-backups`, then stages the new deterministic layout in Subnautica's live save cache. The active world does not change until the game is saved, fully quit, and restarted. The command rejects missing confirmation, the active seed, and a second regeneration in the same process.
 
@@ -25,7 +25,7 @@ Temporary removal warning:
 - Back up the save and fully quit before removing the two Abyssal Ecologies DLLs.
 - A save can load temporarily without the mod, but Subnautica logs missing-prefab errors for saved custom instances.
 - Do not save while the mod is missing. Quit and restore the exact DLLs before continuing.
-- Permanent uninstall is not supported or validated in version 0.8.1.
+- Permanent uninstall is not supported or validated in version 0.8.2.
 
 Configuration is created at:
 BepInEx/config/rocks.verburgt.subnautica.abyssalecologies.cfg

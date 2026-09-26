@@ -296,14 +296,14 @@ internal sealed class TerrainPlacementResolver
         return false;
     }
 
-    private static bool IsProtectedBiome(Vector3 position, out string biome)
+    internal static bool IsProtectedBiome(Vector3 position, out string biome)
     {
         biome = LargeWorld.main == null ? string.Empty : LargeWorld.main.GetBiome(position) ?? string.Empty;
         var normalized = biome.ToLowerInvariant();
         return normalized.Contains("void") || normalized.Contains("crashedship") || normalized.Contains("aurora") || normalized.Contains("precursor");
     }
 
-    private static bool HasProtectedWorldObject(Vector3 position, float radius, out string protectedObject)
+    internal static bool HasProtectedWorldObject(Vector3 position, float radius, out string protectedObject)
     {
         foreach (var collider in Physics.OverlapSphere(position, radius, ~0, QueryTriggerInteraction.Collide))
         {
