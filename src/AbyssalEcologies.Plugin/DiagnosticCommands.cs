@@ -35,7 +35,7 @@ internal static class DiagnosticCommands
 
     [ConsoleCommand("ae_help")]
     public static string Help() =>
-        "Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_boundaries [10-300 seconds]; ae_boundaries_off; ae_validate; ae_perf; ae_grounding; ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION; goto ae1/ae2/ae3.";
+        "Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_boundaries [10-300 seconds]; ae_boundaries_off; ae_validate; ae_perf; ae_grounding; ae_probe REGION; ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION; goto ae1/ae2/ae3.";
 
     [ConsoleCommand("ae_manifest")]
     public static string Manifest()
@@ -187,6 +187,56 @@ internal static class DiagnosticCommands
             Plugin.Log.LogInfo(result);
         else
             Plugin.Log.LogWarning(result);
+        return result;
+    }
+
+    [ConsoleCommand("ae_probe")]
+    public static string Probe(int region = 0)
+    {
+        if (_world == null)
+            return "Abyssal Ecologies: no save manifest is active. Load a save first.";
+        if (region < 1 || region > _world.Regions.Count)
+            return $"AE terrain probe refused: REGION must be 1-{_world.Regions.Count}.";
+
+        var item = _world.Regions[region - 1];
+        var landmark = item.Placements.FirstOrDefault(placement => placement.Kind == PlacementKind.Landmark);
+        if (landmark == null)
+            return $"AE terrain probe failed: region {region} has no landmark placement.";
+
+        var x = landmark.Position.X;
+        var y = landmark.Position.Y;
+        var z = landmark.Position.Z;
+        var localOrigin = new Vector3(x, y + 60f, z);
+        var fullOrigin = new Vector3(x, 10f, z);
+        var terrainMask = Voxeland.GetTerrainLayerMask();
+        var localTerrainHits = Physics.RaycastAll(localOrigin, Vector3.down, 320f, terrainMask, QueryTriggerInteraction.Ignore);
+        var localAllHits = Physics.RaycastAll(localOrigin, Vector3.down, 320f, ~0, QueryTriggerInteraction.Ignore);
+        var fullTerrainHits = Physics.RaycastAll(fullOrigin, Vector3.down, 1800f, terrainMask, QueryTriggerInteraction.Ignore);
+        var fullAllHits = Physics.RaycastAll(fullOrigin, Vector3.down, 1800f, ~0, QueryTriggerInteraction.Ignore);
+        Array.Sort(fullAllHits, (left, right) => left.distance.CompareTo(right.distance));
+
+        var builder = new StringBuilder();
+        builder.Append($"AE terrain probe ae{region} {item.DisplayName}: landmark=({x:0.0},{y:0.0},{z:0.0}), terrainMask={terrainMask}, localTerrainHits={localTerrainHits.Length}, localAllHits={localAllHits.Length}, fullTerrainHits={fullTerrainHits.Length}, fullAllHits={fullAllHits.Length}.");
+        foreach (var hit in fullAllHits.Take(12))
+        {
+            var collider = hit.collider;
+            var layer = collider == null ? -1 : collider.gameObject.layer;
+            var layerName = layer < 0 ? "missing" : LayerMask.LayerToName(layer);
+            var terrainLayer = layer >= 0 && ((1 << layer) & terrainMask) != 0;
+            var colliderName = collider == null ? "missing" : collider.name;
+            var rootName = collider == null ? "missing" : collider.transform.root.name;
+            var slope = Vector3.Angle(hit.normal, Vector3.up);
+            builder.AppendLine();
+            builder.Append($"hit y={hit.point.y:0.0}, distance={hit.distance:0.0}, slope={slope:0.0}, layer={layer}:{layerName}, terrainMask={(terrainLayer ? "yes" : "no")}, collider={colliderName}, root={rootName}.");
+        }
+        if (fullAllHits.Length > 12)
+        {
+            builder.AppendLine();
+            builder.Append($"{fullAllHits.Length - 12} additional all-layer hits omitted.");
+        }
+
+        var result = builder.ToString();
+        Plugin.Log.LogInfo(result);
         return result;
     }
 
