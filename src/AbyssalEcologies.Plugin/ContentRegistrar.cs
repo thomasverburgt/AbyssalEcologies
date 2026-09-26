@@ -13,12 +13,27 @@ namespace AbyssalEcologies.Plugin;
 internal static class ContentRegistrar
 {
     private const int InstanceLogLimitPerContent = 3;
-    private const float LandmarkProbeHeight = 60f;
-    private const float LandmarkProbeDistance = 320f;
-    private const float LandmarkSearchRadius = 72f;
-    private const float LandmarkSurfaceOffset = 0.35f;
-    private const float MaximumLandmarkSlope = 50f;
+    private const float LandmarkProbeHeight = 180f;
+    private const float LandmarkProbeDistance = 520f;
+    private const float LandmarkSearchRadius = 144f;
+    private const float LandmarkSurfaceOffset = 0.2f;
+    private const float MaximumLandmarkSlope = 18f;
+    private const float MaximumSupportHeightSpread = 0.75f;
     private const float MaximumLandmarkAdjustment = 260f;
+    private const float MinimumSupportHalfExtent = 2.5f;
+    private const float MaximumSupportHalfExtent = 14f;
+    private static readonly Vector2[] LandmarkSupportSamples =
+    {
+        new(0f, 0f),
+        new(-1f, 0f),
+        new(1f, 0f),
+        new(0f, -1f),
+        new(0f, 1f),
+        new(-1f, -1f),
+        new(-1f, 1f),
+        new(1f, -1f),
+        new(1f, 1f)
+    };
     private static readonly HashSet<string> LandmarkContentIds = new(StringComparer.Ordinal)
     {
         "glass-arch",
@@ -213,6 +228,7 @@ internal static class ContentRegistrar
         detail = "no acceptable loaded terrain surface was found";
         var stableOffset = LandmarkStableOffset(contentId);
         var originPoint = new WorldPoint(original.x, original.y, original.z);
+        var supportHalfExtents = GetLandmarkSupportHalfExtents(gameObject);
 
         foreach (var sample in PlacementSearchPattern.Around(originPoint, stableOffset, LandmarkSearchRadius))
         {
@@ -222,18 +238,13 @@ internal static class ContentRegistrar
                 continue;
             }
 
-            var origin = new Vector3(sample.X, original.y + LandmarkProbeHeight, sample.Z);
-            if (!Physics.Raycast(origin, Vector3.down, out var hit, LandmarkProbeDistance, Voxeland.GetTerrainLayerMask(), QueryTriggerInteraction.Ignore))
-                continue;
-
-            var slope = Vector3.Angle(hit.normal, Vector3.up);
-            if (slope > MaximumLandmarkSlope)
+            if (!TryFindLevelSupport(sample, original.y, supportHalfExtents, out var supportHeight, out var heightSpread, out var maximumSlope, out var supportFailure))
             {
-                detail = $"nearest loaded terrain slope {slope:0.0} exceeds {MaximumLandmarkSlope:0} degrees";
+                detail = supportFailure;
                 continue;
             }
 
-            var snapped = hit.point + (hit.normal * LandmarkSurfaceOffset);
+            var snapped = new Vector3(sample.X, supportHeight + LandmarkSurfaceOffset, sample.Z);
             adjustment = snapped.y - original.y;
             if (Mathf.Abs(adjustment) > MaximumLandmarkAdjustment)
             {
@@ -257,11 +268,107 @@ internal static class ContentRegistrar
                 ((snapped.x - original.x) * (snapped.x - original.x)) +
                 ((snapped.z - original.z) * (snapped.z - original.z)));
             gameObject.transform.position = snapped;
-            detail = $"vertical={adjustment:+0.0;-0.0;0.0} m, horizontal={horizontalAdjustment:0.0} m, slope={slope:0.0} degrees";
+            detail = $"vertical={adjustment:+0.0;-0.0;0.0} m, horizontal={horizontalAdjustment:0.0} m, support={supportHalfExtents.x:0.0}x{supportHalfExtents.y:0.0} m half-extents, heightSpread={heightSpread:0.00} m, maxSlope={maximumSlope:0.0} degrees";
             return true;
         }
 
         return false;
+    }
+
+    private static bool TryFindLevelSupport(
+        WorldPoint candidate,
+        float originalY,
+        Vector2 supportHalfExtents,
+        out float supportHeight,
+        out float heightSpread,
+        out float maximumSlope,
+        out string failure)
+    {
+        supportHeight = float.MinValue;
+        var minimumHeight = float.MaxValue;
+        maximumSlope = 0f;
+        heightSpread = 0f;
+        failure = "support footprint has no loaded terrain";
+
+        foreach (var supportSample in LandmarkSupportSamples)
+        {
+            var x = candidate.X + (supportSample.x * supportHalfExtents.x);
+            var z = candidate.Z + (supportSample.y * supportHalfExtents.y);
+            var origin = new Vector3(x, originalY + LandmarkProbeHeight, z);
+            if (!Physics.Raycast(origin, Vector3.down, out var hit, LandmarkProbeDistance, Voxeland.GetTerrainLayerMask(), QueryTriggerInteraction.Ignore))
+            {
+                failure = $"support footprint is missing loaded terrain at offset ({supportSample.x * supportHalfExtents.x:+0.0;-0.0;0.0},{supportSample.y * supportHalfExtents.y:+0.0;-0.0;0.0}) m";
+                return false;
+            }
+
+            var slope = Vector3.Angle(hit.normal, Vector3.up);
+            maximumSlope = Mathf.Max(maximumSlope, slope);
+            if (slope > MaximumLandmarkSlope)
+            {
+                failure = $"support footprint slope {slope:0.0} exceeds {MaximumLandmarkSlope:0} degrees";
+                return false;
+            }
+
+            supportHeight = Mathf.Max(supportHeight, hit.point.y);
+            minimumHeight = Mathf.Min(minimumHeight, hit.point.y);
+        }
+
+        heightSpread = supportHeight - minimumHeight;
+        if (heightSpread > MaximumSupportHeightSpread)
+        {
+            failure = $"support footprint height spread {heightSpread:0.00} exceeds {MaximumSupportHeightSpread:0.00} m";
+            return false;
+        }
+
+        return true;
+    }
+
+    private static Vector2 GetLandmarkSupportHalfExtents(GameObject gameObject)
+    {
+        if (!TryGetCombinedBounds(gameObject.GetComponentsInChildren<Collider>(true), out var bounds))
+            TryGetCombinedBounds(gameObject.GetComponentsInChildren<Renderer>(true), out bounds);
+
+        return new Vector2(
+            Mathf.Clamp(bounds.extents.x * 0.8f, MinimumSupportHalfExtent, MaximumSupportHalfExtent),
+            Mathf.Clamp(bounds.extents.z * 0.8f, MinimumSupportHalfExtent, MaximumSupportHalfExtent));
+    }
+
+    private static bool TryGetCombinedBounds<T>(IEnumerable<T> components, out Bounds combined) where T : Component
+    {
+        combined = default;
+        var found = false;
+        foreach (var component in components)
+        {
+            Bounds bounds;
+            if (component is Collider collider)
+            {
+                if (!collider.enabled)
+                    continue;
+                bounds = collider.bounds;
+            }
+            else if (component is Renderer renderer)
+            {
+                if (!renderer.enabled)
+                    continue;
+                bounds = renderer.bounds;
+            }
+            else
+            {
+                continue;
+            }
+
+            if (!found)
+            {
+                combined = bounds;
+                found = true;
+            }
+            else
+            {
+                combined.Encapsulate(bounds);
+            }
+        }
+
+        return found;
     }
 
     internal static void RecordLandmarkGrounding(string contentId, bool grounded, float adjustment, string detail)

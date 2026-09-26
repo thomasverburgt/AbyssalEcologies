@@ -17,7 +17,7 @@ Exit gate: compile succeeds, generator checks pass, and each configured seed reg
 - Add developer diagnostics that print the manifest, report region bounds, validate placements, and expose field-check teleports. *(implemented and field-validated in 0.4.0)*
 - Add bounded late-load and streaming performance instrumentation. *(implemented and field-validated in 0.6.0 on 2026-09-25, including unload and full-restart checks)*
 - Add explicitly guarded manifest regeneration and temporary in-world boundary visualization for disposable saves. *(implemented and field-validated in 0.7.1 on 2026-09-25; 0.7.0's non-durable TempSave backup was rejected and corrected)*
-- Ground landmarks with bounded local raycasts only after their cells naturally stream. *(0.8.1 proved delayed terrain availability beneath AE1/AE3 and open water at AE2's exact center; 0.8.2 adds delayed retries and a deterministic 72-metre nearby-surface search, with remote batch loading still disabled and field validation pending)*
+- Ground landmarks with bounded local raycasts only after their cells naturally stream. *(0.8.2 proved single-point grounding was inadequate by accepting visibly unsuitable 38.6/32.5-degree slopes and still failing AE2; 0.8.3 adds nine-point level-footprint validation plus a 144-metre higher-origin search, with remote batch loading still disabled and field validation pending)*
 
 Exit gate: at least 100 seed runs produce no floating flora, buried landmarks, blocked story entrances, or placements inside existing bases.
 
