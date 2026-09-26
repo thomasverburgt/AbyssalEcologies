@@ -95,4 +95,4 @@ Passing automated checks or reaching the main menu is not sufficient evidence of
 
 ## Immediate next increment
 
-Field-test the 0.10.0 Cinder Ray slice without polishing or redesigning the accepted Glassfin prototype. Require the project-owned manta model, articulated wing/tail rig, thermal-pulse animation, synthesized call, scanner/databank entry, and distinct procedural egg to register without errors while the Rabbit Ray gameplay shell and rollback switch remain intact. Validate AE1 streaming, appearance, scanning, egg creation, performance, save/restart persistence, and containment if available.
+Begin the Lantern Skate original-fauna slice without polishing or redesigning the accepted Glassfin and Cinder Ray prototypes. Replace the Jellyray-derived visible model with project-owned procedural geometry, an articulated rig, texture/icon, animation, sound, scanner/databank entry, and distinct egg while retaining the proven gameplay shell and an explicit rollback switch. Add a bounded ghostlight ecological display, then repeat AE3 streaming, performance, scan, egg, save/restart, and containment checks.

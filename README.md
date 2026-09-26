@@ -83,7 +83,7 @@ For the 0.9.0 Glassfin field test, load the disposable seed-58 save and run `got
 
 That procedure passed for the model, scanner/databank, egg creation, save/restart persistence, and performance. Containment hatching time and final visual polish remain outside the accepted 0.9.0 functional gate.
 
-For the 0.10.0 Cinder Ray field test, run `goto ae1`, wait 12 seconds, and run `ae_fauna`. Require the Cinder Ray line to report `enabled=True`, `registered=yes`, and at least one active instance. Confirm a broad dark-red manta silhouette, independently flapping wings, long articulated tail, and pulsing ember material; scan one and confirm the **Cinder Ray** databank entry. Run `item AbyssalEcologies_cinder_ray_egg` and inspect the faceted glowing egg, then run `ae_perf`. Save/restart persistence remains the acceptance gate.
+The 0.10.0 Cinder Ray functional procedure passed on 2026-09-26: the original manta appeared in AE1, scanned into the databank, produced its distinct egg, and survived a save/full-restart cycle with the egg still present. The fresh process reported 24 active Cinder Rays, the faceted ember egg shell, and `ae_perf` PASS at 18.1 ms setup, 6.1 ms registration, +0.27 MiB, and 123/123 placements. Containment hatching and final visual polish remain outside this functional acceptance.
 
 Do not use this prototype on the only copy of an important save. The 0.3.2 layout passed representative in-game inspection, but terrain-aware placement and permanent uninstall remain incomplete.
 
