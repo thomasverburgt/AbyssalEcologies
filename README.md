@@ -2,11 +2,11 @@
 
 Abyssal Ecologies is an experimental mod for the original **Subnautica (2018)** that currently adds deterministic, procedurally arranged **micro-biomes** to the base game's world and is evolving toward logically unbounded procedural expedition sectors. It is not for Subnautica 2 or Subnautica: Below Zero. The supported direction keeps the finite vanilla map unchanged and uses deterministic, bounded local streaming behind explicit expedition transitions.
 
-The current `0.11.0` vertical slice completes the first implementation pass for all three original-fauna prototypes. Glassfin and Cinder Ray are functionally validated; Lantern Skate now has a code-generated original kite model, articulated veil/ribbon rig, cold-light animation, generated icon, synthesized call, PDA scan entry, and distinct hatchable egg. Their locomotion and persistence still use proven vanilla gameplay shells while the creature pipeline is field-tested. The mod does **not** modify Subnautica's terrain mesh or biome lookup table.
+The current `0.12.0` vertical slice begins the COA2 expedition-runtime foundation with a diagnostic-only deterministic seabed chunk. It is created only by an exact console confirmation, exists only for the current process, includes an original mesh and collider, reports bounded geometry/memory metrics, and has an explicit guarded removal command. The accepted home-world micro-biomes and three fauna prototypes remain unchanged.
 
 ## Project status
 
-**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. Version 0.11.0 retains the validated schema-3, regeneration, performance, grounding, Glassfin, and Cinder Ray behavior while adding the Lantern Skate prototype. It never requests remote terrain batches or modifies Subnautica's baked terrain. Existing schema-1 deterministic and schema-2 terrain-resolved manifests migrate without moving saved coordinates; exclusions introduced after a legacy layout was created remain compatibility warnings.
+**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. Version 0.12.0 retains all accepted 0.11.0 behavior while adding an opt-in runtime terrain experiment below the vanilla map. It does not modify Subnautica's baked terrain, the schema-3 home-world manifest, or save data. Existing schema-1 deterministic and schema-2 terrain-resolved manifests migrate without moving saved coordinates; exclusions introduced after a legacy layout was created remain compatibility warnings.
 
 Version 0.3.2 passed its representative in-game regression on 2026-09-24: initial load, all three regions, all flora/fauna/landmarks, the Thermal Spire, save, full restart, reload, and revisit.
 
@@ -48,6 +48,7 @@ The required sector-portable carrier and the living-archive, sector-discovery, a
 - Restart-only disposable-save regeneration through `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION`, with a timestamped byte-for-byte backup of the prior manifest under `BepInEx/config/AbyssalEcologies/manifest-backups`.
 - A game-independent generator check executable.
 - Game-independent COA2 sector/chunk addresses, deterministic terrain/content seeds, shared seam-height samples, negative-coordinate handling, and bounded streaming-window checks.
+- An opt-in `ae_chunk_create`/`ae_chunk_status`/`ae_chunk_remove` diagnostic spike for one deterministic 256-metre collidable seabed chunk at a bounded staging anchor.
 - A documented narrative-archaeology grammar for future procedural wrecks, linked notes and logs, coherent local histories, physical clues, and rare anomalous discoveries.
 
 ## Requirements
@@ -93,11 +94,13 @@ The 0.10.0 Cinder Ray functional procedure passed on 2026-09-26: the original ma
 
 The 0.11.0 Lantern Skate functional procedure passed on 2026-09-26: the original kite model appeared in AE3, animated normally, scanned into the databank, produced its distinct egg, and survived a save/full-restart cycle with the egg still present. The fresh process reported 22 active Lantern Skates, the ribbed blue lantern egg shell, and `ae_perf` PASS at 18.0 ms setup, 5.9 ms registration, +0.86 MiB, and 123/123 placements. Containment hatching and final visual polish remain outside this functional acceptance.
 
+For the 0.12.0 expedition chunk spike, load only the disposable test save and run `ae_chunk_status` to confirm the terrain is inactive. Run `ae_chunk_create CONFIRM_EXPEDITION_CHUNK_SPIKE`, then `goto aechunk`. Inspect the generated seabed, swim across its relief, verify collision by landing or walking on it, and run `ae_chunk_status`. Leave with `warp 0 0 0`, run `ae_chunk_remove`, and require the status to return inactive. Save/restart must also begin inactive because the diagnostic terrain is never serialized.
+
 Do not use this prototype on the only copy of an important save. The 0.3.2 layout passed representative in-game inspection, but terrain-aware placement and permanent uninstall remain incomplete.
 
 Temporary removal is recoverable only with care: fully quit, back up the save, quarantine the two Abyssal Ecologies DLLs, and expect missing-prefab errors while the save is loaded without the mod. Do not save in that state. Quit and restore the exact plugin DLLs before continuing; version 0.7.1 restored the unchanged manifest and generated content in the isolated field test. Permanent uninstall remains unsupported.
 
-Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.11.0 safely refuses to mix a second manifest into the active session and stages regeneration only for the next process.
+Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.12.0 safely refuses to mix a second manifest into the active session and stages regeneration only for the next process.
 
 ## Isolated Windows test launcher
 

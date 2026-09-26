@@ -16,7 +16,11 @@ internal static class DiagnosticCommands
     private static int _registeredContentTypeCount;
     private static Func<int, string, string>? _regenerationHandler;
 
-    public static void Register() => ConsoleCommandsHandler.RegisterConsoleCommands(typeof(DiagnosticCommands));
+    public static void Register()
+    {
+        ConsoleCommandsHandler.RegisterConsoleCommands(typeof(DiagnosticCommands));
+        ConsoleCommandsHandler.AddGotoTeleportPosition(ExpeditionChunkPrototype.GotoName, ExpeditionChunkPrototype.Arrival);
+    }
 
     public static void SetActive(WorldManifest manifest, GeneratedWorld world)
     {
@@ -35,7 +39,21 @@ internal static class DiagnosticCommands
 
     [ConsoleCommand("ae_help")]
     public static string Help() =>
-        "Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_boundaries [10-300 seconds]; ae_boundaries_off; ae_validate; ae_perf; ae_fauna; ae_grounding; ae_probe REGION; ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION; goto ae1/ae2/ae3.";
+        $"Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_boundaries [10-300 seconds]; ae_boundaries_off; ae_validate; ae_perf; ae_fauna; ae_grounding; ae_probe REGION; ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION; ae_chunk_create {ExpeditionChunkPrototype.ConfirmationPhrase}; ae_chunk_status; ae_chunk_remove; goto ae1/ae2/ae3/{ExpeditionChunkPrototype.GotoName}.";
+
+    [ConsoleCommand("ae_chunk_create")]
+    public static string CreateExpeditionChunk(string confirmation = "")
+    {
+        if (_world == null)
+            return "AE expedition chunk refused: load a disposable save first.";
+        return ExpeditionChunkPrototype.Create(_world.Seed, confirmation);
+    }
+
+    [ConsoleCommand("ae_chunk_status")]
+    public static string ExpeditionChunkStatus() => ExpeditionChunkPrototype.Status();
+
+    [ConsoleCommand("ae_chunk_remove")]
+    public static string RemoveExpeditionChunk() => ExpeditionChunkPrototype.Remove();
 
     [ConsoleCommand("ae_fauna")]
     public static string Fauna()

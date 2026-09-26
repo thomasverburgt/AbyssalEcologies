@@ -103,4 +103,4 @@ Passing automated checks or reaching the main menu is not sufficient evidence of
 
 ## Immediate next increment
 
-Build a diagnostic-only single expedition chunk spike. Generate one project-owned seabed mesh and collider at a controlled test anchor from the new deterministic chunk descriptor, expose explicit create/status/remove commands, report vertex/triangle and managed-memory measurements, and prove complete cleanup. The spike must remain disabled by default, write no expedition save data, leave the schema-3 home-world manifest unchanged, and disappear after restart. Cinder Ray and Lantern Skate behavior work moves behind this COA2 foundation.
+Field-test the 0.12.0 diagnostic expedition chunk. Require initial inactive status, exact-confirmation creation, the project-owned 625-vertex/1,152-triangle seabed and collider at the bounded staging anchor, visible terrain relief, reliable player collision, bounded memory, guarded removal after leaving the surface, and inactive status afterward. Save/full restart must also return inactive with the schema-3 home-world manifest and accepted micro-biomes unchanged.

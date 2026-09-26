@@ -106,4 +106,4 @@ The novelty director tracks incident families, wreck silhouettes, document voice
 
 ## First runtime gate
 
-The next implementation slice is a diagnostic-only single-chunk spike. It must generate one original collidable seabed mesh at a controlled test anchor, report its vertex/triangle/memory counts, and remove it completely on command. It must not alter the schema-3 home-world manifest, register permanent coordinated spawns, write expedition save data, or remain after a process restart.
+Version 0.12.0 implements the diagnostic-only single-chunk spike for field testing. It generates one original 256-metre collidable seabed mesh at a controlled below-map staging anchor, reports vertex/triangle/memory counts, and removes its runtime root, collider, mesh, and material on command. Creation requires `CONFIRM_EXPEDITION_CHUNK_SPIKE`; removal refuses while the player remains near the only support surface. It does not alter the schema-3 home-world manifest, register permanent coordinated spawns, write expedition save data, or intentionally survive a process restart.

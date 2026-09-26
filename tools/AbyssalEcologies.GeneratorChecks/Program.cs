@@ -32,6 +32,7 @@ Check("expedition sectors are deterministic", ExpeditionSectorsAreDeterministic)
 Check("expedition chunk seams share exact heights", ExpeditionChunkSeamsShareExactHeights);
 Check("expedition negative coordinates map to stable sectors", ExpeditionNegativeCoordinatesMapToStableSectors);
 Check("expedition streaming windows are bounded and unique", ExpeditionStreamingWindowsAreBoundedAndUnique);
+Check("expedition detailed terrain seams share exact heights", ExpeditionDetailedTerrainSeamsShareExactHeights);
 
 if (failures.Count > 0)
 {
@@ -396,6 +397,20 @@ static void ExpeditionStreamingWindowsAreBoundedAndUnique()
     Require(window.Count == 25, "radius-two streaming window did not contain 25 chunks");
     Require(window.Select(chunk => chunk.Coordinate).Distinct().Count() == 25, "streaming window contained duplicate chunks");
     Require(window.Any(chunk => chunk.Sector.X < 0 || chunk.Sector.Z < 0), "streaming window did not cross negative sector boundaries");
+}
+
+static void ExpeditionDetailedTerrainSeamsShareExactHeights()
+{
+    var generator = new ExpeditionGenerator();
+    const int subdivisions = 24;
+    var left = new ExpeditionChunkCoordinate(-1, 3);
+    var right = new ExpeditionChunkCoordinate(0, 3);
+    var south = new ExpeditionChunkCoordinate(-1, 4);
+    for (var sample = 0; sample <= subdivisions; sample++)
+    {
+        Require(generator.SampleTerrainHeight(771, left, subdivisions, sample, subdivisions) == generator.SampleTerrainHeight(771, right, 0, sample, subdivisions), "detailed east-west seam height differs");
+        Require(generator.SampleTerrainHeight(771, left, sample, subdivisions, subdivisions) == generator.SampleTerrainHeight(771, south, sample, 0, subdivisions), "detailed north-south seam height differs");
+    }
 }
 
 static string ExpeditionSignature(ExpeditionChunkDescriptor chunk) =>

@@ -137,12 +137,43 @@ public sealed class ExpeditionGenerator
         return settings.BaseDepth + (unit - 0.5f) * settings.Relief;
     }
 
+    public float SampleTerrainHeight(int worldSeed, ExpeditionChunkCoordinate coordinate, int sampleX, int sampleZ, int subdivisions, ExpeditionGenerationSettings? settings = null)
+    {
+        if (subdivisions < 1 || subdivisions > 128) throw new ArgumentOutOfRangeException(nameof(subdivisions));
+        if (sampleX < 0 || sampleX > subdivisions || sampleZ < 0 || sampleZ > subdivisions) throw new ArgumentOutOfRangeException("Terrain sample lies outside the chunk grid.");
+        settings ??= new ExpeditionGenerationSettings();
+        settings.Validate();
+
+        const int latticeFrequency = 4;
+        var globalX = coordinate.X + sampleX / (double)subdivisions;
+        var globalZ = coordinate.Z + sampleZ / (double)subdivisions;
+        var latticeX = globalX * latticeFrequency;
+        var latticeZ = globalZ * latticeFrequency;
+        var x0 = checked((int)Math.Floor(latticeX));
+        var z0 = checked((int)Math.Floor(latticeZ));
+        var tx = Smooth((float)(latticeX - x0));
+        var tz = Smooth((float)(latticeZ - z0));
+        var north = Lerp(LatticeHeight(worldSeed, x0, z0, settings), LatticeHeight(worldSeed, x0 + 1, z0, settings), tx);
+        var south = Lerp(LatticeHeight(worldSeed, x0, z0 + 1, settings), LatticeHeight(worldSeed, x0 + 1, z0 + 1, settings), tx);
+        return Lerp(north, south, tz);
+    }
+
     private static int FloorDivide(int value, int divisor)
     {
         var quotient = value / divisor;
         var remainder = value % divisor;
         return remainder < 0 ? quotient - 1 : quotient;
     }
+
+    private static float LatticeHeight(int worldSeed, int x, int z, ExpeditionGenerationSettings settings)
+    {
+        var value = (uint)Mix(worldSeed, x, z, 0x5EA);
+        var unit = (value >> 8) * (1f / 16777216f);
+        return settings.BaseDepth + (unit - 0.5f) * settings.Relief;
+    }
+
+    private static float Smooth(float value) => value * value * (3f - 2f * value);
+    private static float Lerp(float left, float right, float amount) => left + (right - left) * amount;
 
     private static int Mix(int worldSeed, int x, int z, int salt)
     {
