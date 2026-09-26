@@ -42,7 +42,17 @@ Exit gate: each species has original assets and behavior, scans correctly, survi
 
 Exit gate: sustained multi-sector travel, return trips, save/restart, vehicle transfer, death/respawn, bounded memory, deterministic regeneration, and recovery all pass without changing the vanilla home world.
 
-## Milestone 4 — biome identity
+## Milestone 4 — expedition carrier and progression
+
+- Build a persistent sector-portable carrier with a compact base interior, Seamoth/Prawn docking, charging, storage, fabrication, Modification Station, power, navigation, recovery, and shipborne Alien Containment.
+- Reward a living archive of discovered regional organisms, viable traits, ecological sets, breeding, welfare, and responsible release.
+- Reward sector discovery, route stabilization, biome diversity, cave mapping, and completed surveys through carrier and navigation progression.
+- Deliver a very long authored wreck mystery whose deterministic clue graph is distributed across procedural sectors without random soft locks.
+- Make carrier, docked-craft, containment, inventory, power, damage, discovery, and investigation state transactional across gateways and save/restart.
+
+Exit gate: the carrier and all three progression arcs survive repeated gateway travel, failure recovery, docked-vehicle transfer, specimen persistence, clue recovery, save interruption, and long-distance play without loss or duplication.
+
+## Milestone 5 — biome identity
 
 - Replace placeholder plants and landmarks with modular original asset bundles.
 - Add local fog, particles, soundscapes, lighting, resource loops, food-web relationships, and biome discovery messages.
@@ -50,7 +60,7 @@ Exit gate: sustained multi-sector travel, return trips, save/restart, vehicle tr
 
 Exit gate: regions are visually and mechanically distinct, readable from approach, and do not overwrite vanilla biome metadata globally.
 
-## Milestone 5 — locations of interest
+## Milestone 6 — locations of interest
 
 - Add procedural wrecks, research camps, survey sites, natural arches, fossil beds, and story caches assembled from validated modules.
 - Generate navigable layouts with guaranteed entrances and scanner/loot reachability.
@@ -60,7 +70,7 @@ Exit gate: regions are visually and mechanically distinct, readable from approac
 
 Exit gate: every generated location has a reachable entrance, a safe return path, internally consistent evidence and documents, and deterministic progression rewards.
 
-## Milestone 6 — compatibility and release
+## Milestone 7 — compatibility and release
 
 - Freeze a manifest schema and add migrations before public saves exist.
 - Test common world, map, creature, and performance mods.

@@ -19,6 +19,7 @@ Abyssal Ecologies will pursue **COA2: logically unbounded expedition sectors** o
 - Sector transitions keep Unity coordinates bounded. A sector is logically adjacent to its neighbors even when the implementation uses a controlled transfer rather than a continuous global coordinate.
 - The supported traversal model is a deterministic network of discoverable arches or equivalent gateways. Every transition has a guaranteed return edge, while frontier gates can reveal new logical sectors indefinitely.
 - Player construction in expedition space remains disabled until stable object identity, delta persistence, vehicle transfer, death/respawn, and recovery are proven.
+- The persistent Abyssal Expedition Carrier is the supported mobile home, gateway-transition anchor, Seamoth/Prawn transport, living-specimen archive, navigation room, and long-form investigation space. Its full state must transfer atomically.
 - Every runtime experiment begins disabled, is confined to the disposable test save, and has an explicit cleanup or rollback path.
 
 ## Deterministic address model
@@ -72,7 +73,9 @@ Previously visited sectors are not kept alive. They are regenerated from the mas
 
 The current core uses 32-bit coordinates and derived seeds for the initial offline foundation, which already permits an enormous practical address space. Before the expedition save schema is frozen, sector identifiers and seed-channel hashes will be upgraded to stable 64-bit or wider values to make accidental collisions negligible and leave room for long-running saves.
 
-Initial runtime support will transfer the player only. Seamoth and Prawn transfer follow after safe placement is proven; Cyclops transfer, dropped-object persistence, death/respawn, and player bases are separate acceptance gates. Construction that could straddle logical sectors remains prohibited.
+Initial runtime support will transfer the player only. The expedition carrier follows as a purpose-built persistent vehicle/base; Seamoth and Prawn transfer occurs through its validated docking berths. Cyclops transfer is not planned because the carrier fills that role. Dropped-object persistence, death/respawn, carrier recovery, and player construction are separate acceptance gates. Construction that could straddle logical sectors remains prohibited.
+
+Carrier dimensions, docking envelopes, and safe arrival requirements must be fixed before cave, gateway, and location grammars are considered stable. See [EXPEDITION_CARRIER_AND_PROGRESSION.md](EXPEDITION_CARRIER_AND_PROGRESSION.md).
 
 ## Delivery slices
 

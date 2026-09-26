@@ -28,6 +28,8 @@ Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md]
 
 The expedition-world decision and its save/streaming invariants are defined in [docs/EXPEDITION_ARCHITECTURE.md](docs/EXPEDITION_ARCHITECTURE.md). COA2 sector transitions are the supported direction; seamless origin-rebased COA3 terrain is reserved for a later experimental branch.
 
+The required sector-portable carrier and the living-archive, sector-discovery, and long-form wreck-mystery progression arcs are defined in [docs/EXPEDITION_CARRIER_AND_PROGRESSION.md](docs/EXPEDITION_CARRIER_AND_PROGRESSION.md).
+
 ## What is implemented
 
 - Three generated region archetypes: Glass Kelp Garden, Ember Trench, and Ghostlight Nursery.

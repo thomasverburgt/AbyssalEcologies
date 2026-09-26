@@ -8,6 +8,8 @@ Deliver a save-compatible mod for the original Subnautica (2018), on its current
 
 The primary expansion architecture is COA2: the vanilla map remains the finite home world, while discoverable bidirectional arches connect deterministic logical sectors assembled from bounded locally streamed chunks. Only the active sector occupies a reusable physical staging volume, separating continued exploration from the original game's coordinate boundary. COA3 seamless origin-rebased terrain is deferred to a later experimental branch and is not part of the supported save path.
 
+The persistent Abyssal Expedition Carrier is the required mobile home and gateway-transition anchor. It must ultimately carry a docked Seamoth and Prawn Suit, base utilities, storage, charging, fabrication, Modification Station, navigation/research facilities, and living-specimen containment. Three interlocking player arcs drive long-term play: maintaining a shipborne living archive, earning progression through meaningful sector discovery, and solving one authored long-running wreck mystery distributed deterministically across procedural locations.
+
 ## Verified baseline
 
 The repository currently provides:
@@ -68,6 +70,10 @@ Replace placeholder plants and landmarks with modular original assets. Add local
 ### Locations of interest
 
 Assemble wrecks, research camps, survey sites, fossil beds, natural arches, and story caches from validated modules. Each location receives a deterministic authored incident history expressed through linked notes, logs, physical evidence, clue order, and occasional internally consistent weirdness. Every layout must guarantee an entrance, return path, reachable interactions, coherent evidence, and deterministic progression rewards.
+
+### Expedition carrier and progression
+
+Treat the carrier as a persistent logical object whose exterior, interior, docked craft, inventories, power, damage, containment inhabitants, map, and investigation state transfer atomically between sectors. Build living-archive, sector-cartography, and long-wreck-mystery progression on deterministic records with explicit recovery and anti-duplication tests. Detailed requirements are maintained in [EXPEDITION_CARRIER_AND_PROGRESSION.md](EXPEDITION_CARRIER_AND_PROGRESSION.md).
 
 ### Compatibility and release
 
