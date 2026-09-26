@@ -26,6 +26,9 @@ internal static class ContentRegistrar
     private const float MaximumFoundationThickness = 18f;
     private const int FloraSiteRingSampleCount = 8;
     private const float FloraSiteRingRadius = 6f;
+    private const float GlassKelpSeamountRadius = 132f;
+    private const float GlassKelpSeamountVerticalRadius = 25f;
+    private const float GlassKelpSeamountTopBelowCenter = 20f;
     private static readonly Vector2[] LandmarkSupportSamples =
     {
         new(0f, 0f),
@@ -236,10 +239,18 @@ internal static class ContentRegistrar
 
     private static void LogSuccessfulInstance(string contentId, GameObject gameObject)
     {
+        if (string.Equals(contentId, "glass-arch", StringComparison.Ordinal))
+            CreateGlassKelpSeamount(gameObject, gameObject.transform.position);
+
         if (LandmarkContentIds.Contains(contentId))
         {
             var agent = gameObject.GetComponent<LandmarkGroundingAgent>() ?? gameObject.AddComponent<LandmarkGroundingAgent>();
             agent.Configure(contentId, gameObject.transform.position);
+        }
+        else if (string.Equals(contentId, "prism-kelp", StringComparison.Ordinal))
+        {
+            var agent = gameObject.GetComponent<SurfaceGroundingAgent>() ?? gameObject.AddComponent<SurfaceGroundingAgent>();
+            agent.Configure(gameObject.transform.position);
         }
 
         InstantiationCounts.TryGetValue(contentId, out var totalCount);
@@ -347,15 +358,55 @@ internal static class ContentRegistrar
 
     private static WorldPoint PlannedLandmarkSpawnAnchor(string contentId, WorldPoint landmark, IReadOnlyList<WorldPoint> floraSites)
     {
-        if (!string.Equals(contentId, "glass-arch", StringComparison.Ordinal) || floraSites.Count == 0)
-            return landmark;
+        return landmark;
+    }
 
-        var flora = floraSites[0];
-        var phase = (LandmarkStableOffset(contentId) & 255) * (Mathf.PI * 2f / 256f);
-        return new WorldPoint(
-            flora.X + (Mathf.Cos(phase) * FloraSiteRingRadius),
-            flora.Y,
-            flora.Z + (Mathf.Sin(phase) * FloraSiteRingRadius));
+    private static void CreateGlassKelpSeamount(GameObject landmark, Vector3 regionCenter)
+    {
+        var seamount = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        seamount.name = "Abyssal Ecologies Glass Kelp Seamount";
+        seamount.layer = 30;
+        seamount.transform.position = new Vector3(
+            regionCenter.x,
+            regionCenter.y - GlassKelpSeamountTopBelowCenter - GlassKelpSeamountVerticalRadius,
+            regionCenter.z);
+        seamount.transform.rotation = Quaternion.identity;
+        seamount.transform.localScale = new Vector3(
+            GlassKelpSeamountRadius * 2f,
+            GlassKelpSeamountVerticalRadius * 2f,
+            GlassKelpSeamountRadius * 2f);
+
+        var meshFilter = seamount.GetComponent<MeshFilter>();
+        var sphereCollider = seamount.GetComponent<SphereCollider>();
+        if (sphereCollider != null)
+        {
+            sphereCollider.enabled = false;
+            UnityEngine.Object.Destroy(sphereCollider);
+        }
+        if (meshFilter != null)
+        {
+            var meshCollider = seamount.AddComponent<MeshCollider>();
+            meshCollider.sharedMesh = meshFilter.sharedMesh;
+            meshCollider.convex = false;
+        }
+
+        var sourceRenderer = landmark.GetComponentInChildren<Renderer>(true);
+        var seamountRenderer = seamount.GetComponent<Renderer>();
+        if (sourceRenderer != null && sourceRenderer.sharedMaterial != null && seamountRenderer != null)
+        {
+            seamountRenderer.material = new Material(sourceRenderer.sharedMaterial);
+            var material = seamountRenderer.material;
+            if (material.HasProperty("_Color"))
+                material.SetColor("_Color", new Color(0.07f, 0.14f, 0.17f, 1f));
+            if (material.HasProperty("_GlowColor"))
+                material.SetColor("_GlowColor", new Color(0.02f, 0.16f, 0.2f, 1f));
+            if (material.HasProperty("_GlowStrength"))
+                material.SetFloat("_GlowStrength", 0.2f);
+        }
+
+        var lifetime = seamount.AddComponent<GeneratedLandformLifetime>();
+        lifetime.Configure(landmark);
+        Plugin.Log.LogInfo($"Created bounded Glass Kelp seamount at ({regionCenter.x:0.0},{regionCenter.y - GlassKelpSeamountTopBelowCenter:0.0},{regionCenter.z:0.0}) with radius {GlassKelpSeamountRadius:0} m.");
     }
 
     private static float HorizontalDistanceSquared(WorldPoint first, WorldPoint second)

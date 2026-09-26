@@ -17,7 +17,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string Guid = "rocks.verburgt.subnautica.abyssalecologies";
     public const string Name = "Abyssal Ecologies";
-    public const string Version = "0.8.7";
+    public const string Version = "0.8.8";
 
     internal static ManualLogSource Log { get; private set; } = null!;
 
