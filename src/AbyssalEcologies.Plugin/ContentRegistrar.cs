@@ -246,10 +246,10 @@ internal static class ContentRegistrar
 
     private static void RegisterGlassfinEgg(TechType glassfinTechType)
     {
-        if (!Enum.TryParse("RabbitRayEgg", ignoreCase: false, out TechType sourceEggTechType))
+        if (!Enum.TryParse("RabbitrayEgg", ignoreCase: false, out TechType sourceEggTechType))
         {
-            _glassfinEggRegistrationDetail = "rollback: RabbitRayEgg source is unavailable";
-            Plugin.Log.LogWarning("Glassfin egg registration skipped because the RabbitRayEgg TechType is unavailable in this game build.");
+            _glassfinEggRegistrationDetail = "rollback: RabbitrayEgg source is unavailable";
+            Plugin.Log.LogWarning("Glassfin egg registration skipped because the RabbitrayEgg TechType is unavailable in this game build.");
             return;
         }
 
