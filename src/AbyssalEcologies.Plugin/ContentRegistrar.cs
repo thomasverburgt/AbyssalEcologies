@@ -24,6 +24,7 @@ internal static class ContentRegistrar
     private const int MinimumFoundationTerrainHits = 5;
     private const float MinimumFoundationThickness = 1.5f;
     private const float MaximumFoundationThickness = 18f;
+    private const float FloraSiteOutwardOffset = 8f;
     private static readonly Vector2[] LandmarkSupportSamples =
     {
         new(0f, 0f),
@@ -47,6 +48,7 @@ internal static class ContentRegistrar
     private static readonly Dictionary<string, int> InstantiationCounts = new(StringComparer.Ordinal);
     private static readonly List<WeakReference> LiveInstances = new();
     private static readonly Dictionary<string, LandmarkGroundingResult> LandmarkGroundingResults = new(StringComparer.Ordinal);
+    private static readonly List<LandmarkSitePlan> LandmarkSitePlans = new();
     private static int _registeredPlacementCount;
 
     private static readonly ContentDefinition[] Definitions =
@@ -86,7 +88,22 @@ internal static class ContentRegistrar
         InstantiationCounts.Clear();
         LiveInstances.Clear();
         LandmarkGroundingResults.Clear();
+        LandmarkSitePlans.Clear();
         _registeredPlacementCount = 0;
+
+        foreach (var region in world.Regions)
+        {
+            var landmark = region.Placements.FirstOrDefault(placement => placement.Kind == PlacementKind.Landmark);
+            if (landmark == null)
+                continue;
+
+            var floraSites = region.Placements
+                .Where(placement => placement.Kind == PlacementKind.Flora)
+                .OrderBy(placement => HorizontalDistanceSquared(placement.Position, landmark.Position))
+                .Select(placement => OutwardFloraSite(landmark.Position, placement.Position))
+                .ToArray();
+            LandmarkSitePlans.Add(new LandmarkSitePlan(landmark.ContentId, landmark.Position, floraSites));
+        }
 
         var placementsByContent = world.Regions
             .SelectMany(region => region.Placements)
@@ -232,7 +249,7 @@ internal static class ContentRegistrar
         var originPoint = new WorldPoint(original.x, original.y, original.z);
         var supportHalfExtents = GetLandmarkSupportHalfExtents(gameObject);
 
-        foreach (var sample in PlacementSearchPattern.Around(originPoint, stableOffset, LandmarkSearchRadius))
+        foreach (var sample in LandmarkCandidateSites(contentId, originPoint, stableOffset))
         {
             if (WorldProtectionCatalog.TryFindExclusion(sample, 35f, out var areaId))
             {
@@ -272,11 +289,50 @@ internal static class ContentRegistrar
             gameObject.transform.position = snapped;
             var foundationThickness = Mathf.Clamp(heightSpread + 1.5f, MinimumFoundationThickness, MaximumFoundationThickness);
             CreateLevelFoundation(gameObject, contentId, sample, supportHalfExtents, supportHeight, foundationThickness);
-            detail = $"vertical={adjustment:+0.0;-0.0;0.0} m, horizontal={horizontalAdjustment:0.0} m, levelFoundation={supportHalfExtents.x:0.0}x{supportHalfExtents.y:0.0} m half-extents/{foundationThickness:0.0} m thick, terrainHits={terrainHits}/{LandmarkSupportSamples.Length}, terrainRelief={heightSpread:0.00} m, maxTerrainSlope={maximumSlope:0.0} degrees";
+            detail = $"position=({snapped.x:0.0},{snapped.y:0.0},{snapped.z:0.0}), vertical={adjustment:+0.0;-0.0;0.0} m, horizontal={horizontalAdjustment:0.0} m, levelFoundation={supportHalfExtents.x:0.0}x{supportHalfExtents.y:0.0} m half-extents/{foundationThickness:0.0} m thick, terrainHits={terrainHits}/{LandmarkSupportSamples.Length}, terrainRelief={heightSpread:0.00} m, maxTerrainSlope={maximumSlope:0.0} degrees";
             return true;
         }
 
         return false;
+    }
+
+    private static IEnumerable<WorldPoint> LandmarkCandidateSites(string contentId, WorldPoint origin, int stableOffset)
+    {
+        yield return origin;
+
+        var plan = LandmarkSitePlans
+            .Where(item => string.Equals(item.ContentId, contentId, StringComparison.Ordinal))
+            .OrderBy(item => HorizontalDistanceSquared(item.LandmarkPosition, origin))
+            .FirstOrDefault();
+        if (plan != null && HorizontalDistanceSquared(plan.LandmarkPosition, origin) < 1f)
+        {
+            foreach (var site in plan.FloraSites)
+                yield return site;
+        }
+
+        foreach (var site in PlacementSearchPattern.Around(origin, stableOffset, LandmarkSearchRadius).Skip(1))
+            yield return site;
+    }
+
+    private static WorldPoint OutwardFloraSite(WorldPoint landmark, WorldPoint flora)
+    {
+        var dx = flora.X - landmark.X;
+        var dz = flora.Z - landmark.Z;
+        var length = (float)Math.Sqrt((dx * dx) + (dz * dz));
+        if (length < 0.01f)
+            return flora;
+
+        return new WorldPoint(
+            flora.X + ((dx / length) * FloraSiteOutwardOffset),
+            landmark.Y,
+            flora.Z + ((dz / length) * FloraSiteOutwardOffset));
+    }
+
+    private static float HorizontalDistanceSquared(WorldPoint first, WorldPoint second)
+    {
+        var dx = first.X - second.X;
+        var dz = first.Z - second.Z;
+        return (dx * dx) + (dz * dz);
     }
 
     private static bool TryFindFoundationSite(
@@ -436,6 +492,20 @@ internal static class ContentRegistrar
         "nursery-heart" => 307,
         _ => 0
     };
+
+    private sealed class LandmarkSitePlan
+    {
+        public LandmarkSitePlan(string contentId, WorldPoint landmarkPosition, IReadOnlyList<WorldPoint> floraSites)
+        {
+            ContentId = contentId;
+            LandmarkPosition = landmarkPosition;
+            FloraSites = floraSites;
+        }
+
+        public string ContentId { get; }
+        public WorldPoint LandmarkPosition { get; }
+        public IReadOnlyList<WorldPoint> FloraSites { get; }
+    }
 
     internal sealed class SpawnRegistrationMetrics
     {
