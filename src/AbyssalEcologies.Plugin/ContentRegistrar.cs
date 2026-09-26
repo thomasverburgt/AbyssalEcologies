@@ -53,6 +53,7 @@ internal static class ContentRegistrar
     private static readonly List<WeakReference> LiveInstances = new();
     private static readonly Dictionary<string, LandmarkGroundingResult> LandmarkGroundingResults = new(StringComparer.Ordinal);
     private static readonly List<LandmarkSitePlan> LandmarkSitePlans = new();
+    private static GameObject? _glassKelpSeamount;
     private static int _registeredPlacementCount;
 
     private static readonly ContentDefinition[] Definitions =
@@ -363,6 +364,9 @@ internal static class ContentRegistrar
 
     private static void CreateGlassKelpSeamount(GameObject landmark, Vector3 regionCenter)
     {
+        if (_glassKelpSeamount != null)
+            return;
+
         var seamount = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         seamount.name = "Abyssal Ecologies Glass Kelp Seamount";
         seamount.layer = 30;
@@ -404,8 +408,7 @@ internal static class ContentRegistrar
                 material.SetFloat("_GlowStrength", 0.2f);
         }
 
-        var lifetime = seamount.AddComponent<GeneratedLandformLifetime>();
-        lifetime.Configure(landmark);
+        _glassKelpSeamount = seamount;
         Plugin.Log.LogInfo($"Created bounded Glass Kelp seamount at ({regionCenter.x:0.0},{regionCenter.y - GlassKelpSeamountTopBelowCenter:0.0},{regionCenter.z:0.0}) with radius {GlassKelpSeamountRadius:0} m.");
     }
 
