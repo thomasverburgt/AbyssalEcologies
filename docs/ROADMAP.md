@@ -37,7 +37,7 @@ Exit gate: each species has original assets and behavior, scans correctly, survi
 - Stream and pool only a bounded local chunk window.
 - Generate additive seam-safe terrain, colliders, biome dressing, fauna, and locations from chunk descriptors.
 - Persist generator version, discoveries, removed resources, placed objects, and other player deltas rather than complete generated chunks.
-- Use controlled sector transitions to keep Unity coordinates bounded.
+- Use discoverable bidirectional arches and a reusable bounded physical staging sector to keep Unity coordinates bounded while logical sector coordinates continue outward.
 - Keep seamless origin-rebased COA3 work isolated on a later experimental branch.
 
 Exit gate: sustained multi-sector travel, return trips, save/restart, vehicle transfer, death/respawn, bounded memory, deterministic regeneration, and recovery all pass without changing the vanilla home world.

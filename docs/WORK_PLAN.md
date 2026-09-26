@@ -6,7 +6,7 @@ Last updated: 2026-09-26
 
 Deliver a save-compatible mod for the original Subnautica (2018), on its current non-Legacy desktop branch, that creates deterministic, procedurally arranged undersea micro-biomes containing original animals, environmental assemblies, and locations of interest without overwriting vanilla terrain or blocking story progression. This project does not target Subnautica 2 or Subnautica: Below Zero.
 
-The primary expansion architecture is COA2: the vanilla map remains the finite home world, while a gateway leads to deterministic, logically unbounded expedition sectors assembled from bounded locally streamed chunks. COA3 seamless origin-rebased terrain is deferred to a later experimental branch and is not part of the supported save path.
+The primary expansion architecture is COA2: the vanilla map remains the finite home world, while discoverable bidirectional arches connect deterministic logical sectors assembled from bounded locally streamed chunks. Only the active sector occupies a reusable physical staging volume, separating continued exploration from the original game's coordinate boundary. COA3 seamless origin-rebased terrain is deferred to a later experimental branch and is not part of the supported save path.
 
 ## Verified baseline
 

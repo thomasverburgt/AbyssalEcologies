@@ -17,6 +17,7 @@ Abyssal Ecologies will pursue **COA2: logically unbounded expedition sectors** o
 - Save data records the seed, generator version, visited sectors, discoveries, resource removals, placed objects, and other player-caused deltas.
 - Wrecks, notes, logs, local histories, and anomalous discoveries are generated from versioned authored narrative grammars; a sector's physical evidence and documents must share one deterministic event history.
 - Sector transitions keep Unity coordinates bounded. A sector is logically adjacent to its neighbors even when the implementation uses a controlled transfer rather than a continuous global coordinate.
+- The supported traversal model is a deterministic network of discoverable arches or equivalent gateways. Every transition has a guaranteed return edge, while frontier gates can reveal new logical sectors indefinitely.
 - Player construction in expedition space remains disabled until stable object identity, delta persistence, vehicle transfer, death/respawn, and recovery are proven.
 - Every runtime experiment begins disabled, is confined to the disposable test save, and has an explicit cleanup or rollback path.
 
@@ -43,6 +44,36 @@ The initial biome grammar selects Glass Kelp Garden, Ember Trench, or Ghostlight
 7. At a sector boundary, perform a controlled coordinate-safe transition and rebuild the local window.
 8. Return through the gateway without changing the vanilla home-world coordinates.
 
+## Gateway topology and bounded physical staging
+
+The master expedition seed does not describe one finite physical map. It addresses a logical grid or graph of sector records. Sector `(0,0)` is the first expedition destination. Discoverable arches expose neighboring sector addresses; a north/east/south/west coordinate model is preferred initially because the opposite coordinate provides an unambiguous return link. Later special gates may create rare long-distance or depth-tier connections while still storing a deterministic reverse edge.
+
+The original game's world boundary limits simultaneous Unity coordinates, not the number of logical sectors. AE therefore separates **logical expedition coordinates** from **physical runtime coordinates**:
+
+- one reserved, bounded expedition staging volume is used for the active sector;
+- the active sector's local chunks are generated around that stable physical anchor;
+- entering an arch records the current sector deltas and local return gateway;
+- a transition effect or loading interval hides controlled unloading and pooling;
+- the destination sector is generated into the same bounded staging volume;
+- the player and supported vehicle are placed at the destination arrival arch;
+- returning through that arch regenerates the previous sector from its seed plus saved deltas.
+
+This permits continued exploration without moving farther through the vanilla coordinate space. The player keeps equipment, discoveries, scans, story progress, and supported vehicles; the landscape is replaced only during explicit gateway transitions.
+
+Every ordinary sector must provide:
+
+- one guaranteed arrival/return arch;
+- at least one reachable frontier arch until the intended expedition boundary policy says otherwise;
+- stable edge identities so save/reload cannot reroll destinations;
+- a safe arrival volume, navigable route away from the arch, and recovery destination;
+- a deterministic local history, ecology, cave network, and location set.
+
+Previously visited sectors are not kept alive. They are regenerated from the master seed, generator version, and sector address, then patched with compact saved deltas. The save maintains discovered sector addresses, gateway links, current logical sector/local position, scan and story state, depleted or altered objects, and eventually validated player construction.
+
+The current core uses 32-bit coordinates and derived seeds for the initial offline foundation, which already permits an enormous practical address space. Before the expedition save schema is frozen, sector identifiers and seed-channel hashes will be upgraded to stable 64-bit or wider values to make accidental collisions negligible and leave room for long-running saves.
+
+Initial runtime support will transfer the player only. Seamoth and Prawn transfer follow after safe placement is proven; Cyclops transfer, dropped-object persistence, death/respawn, and player bases are separate acceptance gates. Construction that could straddle logical sectors remains prohibited.
+
 ## Delivery slices
 
 1. Deterministic address, seed, seam, and streaming-window core checks. *(implemented)*
@@ -52,7 +83,7 @@ The initial biome grammar selects Glass Kelp Garden, Ember Trench, or Ghostlight
 5. Biome grammar and transition chunks using the existing three biome families.
 6. Flora, fauna, landmark, and performance budgets per active chunk.
 7. Versioned expedition manifest and compact per-chunk delta persistence.
-8. Gateway, sector transition, vehicle transfer, death/respawn, and recovery.
+8. Bidirectional arch network, bounded staging-sector transition, vehicle transfer, death/respawn, and recovery.
 9. Deterministic modular locations of interest with navigation guarantees.
 10. Long-distance, save/restart, memory, recovery, and compatibility endurance tests.
 
