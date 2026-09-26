@@ -1,6 +1,6 @@
 # Abyssal Ecologies
 
-Abyssal Ecologies is an experimental mod for the original **Subnautica (2018)** that adds deterministic, procedurally arranged **micro-biomes** to the base game's world. It is not for Subnautica 2 or Subnautica: Below Zero. A generation seed selects region positions, species variants, environmental clusters, and a central landmark. The same seed always produces the same layout.
+Abyssal Ecologies is an experimental mod for the original **Subnautica (2018)** that currently adds deterministic, procedurally arranged **micro-biomes** to the base game's world and is evolving toward logically unbounded procedural expedition sectors. It is not for Subnautica 2 or Subnautica: Below Zero. The supported direction keeps the finite vanilla map unchanged and uses deterministic, bounded local streaming behind explicit expedition transitions.
 
 The current `0.11.0` vertical slice completes the first implementation pass for all three original-fauna prototypes. Glassfin and Cinder Ray are functionally validated; Lantern Skate now has a code-generated original kite model, articulated veil/ribbon rig, cold-light animation, generated icon, synthesized call, PDA scan entry, and distinct hatchable egg. Their locomotion and persistence still use proven vanilla gameplay shells while the creature pipeline is field-tested. The mod does **not** modify Subnautica's terrain mesh or biome lookup table.
 
@@ -26,6 +26,8 @@ Version 0.9.0 passed its Glassfin functional field test on 2026-09-26. The origi
 
 Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md](docs/WORK_PLAN.md). The longer product sequence is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
+The expedition-world decision and its save/streaming invariants are defined in [docs/EXPEDITION_ARCHITECTURE.md](docs/EXPEDITION_ARCHITECTURE.md). COA2 sector transitions are the supported direction; seamless origin-rebased COA3 terrain is reserved for a later experimental branch.
+
 ## What is implemented
 
 - Three generated region archetypes: Glass Kelp Garden, Ember Trench, and Ghostlight Nursery.
@@ -43,6 +45,7 @@ Current priorities and acceptance evidence are maintained in [docs/WORK_PLAN.md]
 - Temporary non-colliding region rings and center markers through `ae_boundaries [10-300 seconds]` and `ae_boundaries_off`.
 - Restart-only disposable-save regeneration through `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION`, with a timestamped byte-for-byte backup of the prior manifest under `BepInEx/config/AbyssalEcologies/manifest-backups`.
 - A game-independent generator check executable.
+- Game-independent COA2 sector/chunk addresses, deterministic terrain/content seeds, shared seam-height samples, negative-coordinate handling, and bounded streaming-window checks.
 
 ## Requirements
 

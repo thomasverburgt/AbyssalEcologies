@@ -28,6 +28,10 @@ Check("world diagnostics reject invalid layouts", WorldDiagnosticsRejectInvalidL
 Check("world diagnostics preserve legacy exclusion findings as warnings", WorldDiagnosticsPreserveLegacyExclusionWarnings);
 Check("performance budget accepts bounded measurements", PerformanceBudgetAcceptsBoundedMeasurements);
 Check("performance budget rejects overruns and count drift", PerformanceBudgetRejectsOverrunsAndCountDrift);
+Check("expedition sectors are deterministic", ExpeditionSectorsAreDeterministic);
+Check("expedition chunk seams share exact heights", ExpeditionChunkSeamsShareExactHeights);
+Check("expedition negative coordinates map to stable sectors", ExpeditionNegativeCoordinatesMapToStableSectors);
+Check("expedition streaming windows are bounded and unique", ExpeditionStreamingWindowsAreBoundedAndUnique);
 
 if (failures.Count > 0)
 {
@@ -355,6 +359,47 @@ static void PerformanceBudgetRejectsOverrunsAndCountDrift()
     Require(!report.Passed, "performance budget accepted an overrun");
     Require(report.Failures.Count == 4, "performance budget did not report every overrun");
 }
+
+static void ExpeditionSectorsAreDeterministic()
+{
+    var generator = new ExpeditionGenerator();
+    var coordinate = new ExpeditionSectorCoordinate(17, -9);
+    var first = generator.GenerateSector(451230, coordinate).Chunks;
+    var second = generator.GenerateSector(451230, coordinate).Chunks;
+    var changed = generator.GenerateSector(451231, coordinate).Chunks;
+    Require(first.Count == 64, "default sector did not contain 8x8 chunks");
+    Require(first.Select(ExpeditionSignature).SequenceEqual(second.Select(ExpeditionSignature)), "same sector seed changed output");
+    Require(!first.Select(ExpeditionSignature).SequenceEqual(changed.Select(ExpeditionSignature)), "different world seed reproduced the same sector");
+}
+
+static void ExpeditionChunkSeamsShareExactHeights()
+{
+    var generator = new ExpeditionGenerator();
+    var left = generator.GenerateChunk(91, new ExpeditionChunkCoordinate(-1, 4));
+    var right = generator.GenerateChunk(91, new ExpeditionChunkCoordinate(0, 4));
+    var south = generator.GenerateChunk(91, new ExpeditionChunkCoordinate(-1, 5));
+    Require(left.NorthEastHeight == right.NorthWestHeight && left.SouthEastHeight == right.SouthWestHeight, "east-west seam heights differ");
+    Require(left.SouthWestHeight == south.NorthWestHeight && left.SouthEastHeight == south.NorthEastHeight, "north-south seam heights differ");
+}
+
+static void ExpeditionNegativeCoordinatesMapToStableSectors()
+{
+    var generator = new ExpeditionGenerator();
+    Require(generator.GenerateChunk(1, new ExpeditionChunkCoordinate(-1, -1)).Sector.Equals(new ExpeditionSectorCoordinate(-1, -1)), "chunk -1,-1 did not floor-map to sector -1,-1");
+    Require(generator.GenerateChunk(1, new ExpeditionChunkCoordinate(-8, -8)).Sector.Equals(new ExpeditionSectorCoordinate(-1, -1)), "negative sector boundary mapped incorrectly");
+    Require(generator.GenerateChunk(1, new ExpeditionChunkCoordinate(-9, -9)).Sector.Equals(new ExpeditionSectorCoordinate(-2, -2)), "chunk beyond negative boundary mapped incorrectly");
+}
+
+static void ExpeditionStreamingWindowsAreBoundedAndUnique()
+{
+    var window = new ExpeditionGenerator().GenerateStreamingWindow(88, new ExpeditionChunkCoordinate(0, 0), 2);
+    Require(window.Count == 25, "radius-two streaming window did not contain 25 chunks");
+    Require(window.Select(chunk => chunk.Coordinate).Distinct().Count() == 25, "streaming window contained duplicate chunks");
+    Require(window.Any(chunk => chunk.Sector.X < 0 || chunk.Sector.Z < 0), "streaming window did not cross negative sector boundaries");
+}
+
+static string ExpeditionSignature(ExpeditionChunkDescriptor chunk) =>
+    $"{chunk.Coordinate}|{chunk.Sector}|{chunk.Biome}|{chunk.TerrainSeed}|{chunk.ContentSeed}|{chunk.NorthWestHeight:R}|{chunk.NorthEastHeight:R}|{chunk.SouthEastHeight:R}|{chunk.SouthWestHeight:R}";
 
 static IReadOnlyList<string> Flatten(GeneratedWorld world) => world.Regions
     .SelectMany(region => region.Placements.Select(placement => $"{region.ArchetypeId}|{placement.ContentId}|{placement.Position}|{placement.Scale:0.000}"))

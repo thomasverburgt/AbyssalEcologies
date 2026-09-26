@@ -30,7 +30,19 @@ Exit gate: at least 100 seed runs produce no floating flora, buried landmarks, b
 
 Exit gate: each species has original assets and behavior, scans correctly, survives save/load, and stays inside its performance budget.
 
-## Milestone 3 — biome identity
+## Milestone 3 — logically unbounded expedition sectors
+
+- Preserve the finite vanilla world as the unchanged home map and enter generated space through an explicit gateway.
+- Generate deterministic sector and chunk addresses from a per-save expedition seed.
+- Stream and pool only a bounded local chunk window.
+- Generate additive seam-safe terrain, colliders, biome dressing, fauna, and locations from chunk descriptors.
+- Persist generator version, discoveries, removed resources, placed objects, and other player deltas rather than complete generated chunks.
+- Use controlled sector transitions to keep Unity coordinates bounded.
+- Keep seamless origin-rebased COA3 work isolated on a later experimental branch.
+
+Exit gate: sustained multi-sector travel, return trips, save/restart, vehicle transfer, death/respawn, bounded memory, deterministic regeneration, and recovery all pass without changing the vanilla home world.
+
+## Milestone 4 — biome identity
 
 - Replace placeholder plants and landmarks with modular original asset bundles.
 - Add local fog, particles, soundscapes, lighting, resource loops, food-web relationships, and biome discovery messages.
@@ -38,7 +50,7 @@ Exit gate: each species has original assets and behavior, scans correctly, survi
 
 Exit gate: regions are visually and mechanically distinct, readable from approach, and do not overwrite vanilla biome metadata globally.
 
-## Milestone 4 — locations of interest
+## Milestone 5 — locations of interest
 
 - Add procedural research camps, natural arches, fossil beds, and small story caches assembled from validated modules.
 - Generate navigable layouts with guaranteed entrances and scanner/loot reachability.
@@ -46,7 +58,7 @@ Exit gate: regions are visually and mechanically distinct, readable from approac
 
 Exit gate: every generated location has a reachable entrance, a safe return path, and deterministic progression rewards.
 
-## Milestone 5 — compatibility and release
+## Milestone 6 — compatibility and release
 
 - Freeze a manifest schema and add migrations before public saves exist.
 - Test common world, map, creature, and performance mods.

@@ -6,6 +6,8 @@ Last updated: 2026-09-26
 
 Deliver a save-compatible mod for the original Subnautica (2018), on its current non-Legacy desktop branch, that creates deterministic, procedurally arranged undersea micro-biomes containing original animals, environmental assemblies, and locations of interest without overwriting vanilla terrain or blocking story progression. This project does not target Subnautica 2 or Subnautica: Below Zero.
 
+The primary expansion architecture is COA2: the vanilla map remains the finite home world, while a gateway leads to deterministic, logically unbounded expedition sectors assembled from bounded locally streamed chunks. COA3 seamless origin-rebased terrain is deferred to a later experimental branch and is not part of the supported save path.
+
 ## Verified baseline
 
 The repository currently provides:
@@ -95,4 +97,4 @@ Passing automated checks or reaching the main menu is not sufficient evidence of
 
 ## Immediate next increment
 
-Add a bounded Cinder Ray geothermal-circling state machine without polishing or redesigning the accepted prototype assets. The behavior must remain local to its spawn neighborhood, visibly alternate between cruise and heat-basking states, avoid overriding save integration, expose state counts through `ae_fauna`, and retain a configuration rollback to the proven Rabbit Ray locomotion. Validate AE1 streaming, unload/revisit, save/restart persistence, and performance before applying behavior changes to another species.
+Build a diagnostic-only single expedition chunk spike. Generate one project-owned seabed mesh and collider at a controlled test anchor from the new deterministic chunk descriptor, expose explicit create/status/remove commands, report vertex/triangle and managed-memory measurements, and prove complete cleanup. The spike must remain disabled by default, write no expedition save data, leave the schema-3 home-world manifest unchanged, and disappear after restart. Cinder Ray and Lantern Skate behavior work moves behind this COA2 foundation.
