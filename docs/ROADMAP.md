@@ -34,7 +34,7 @@ Exit gate: each species has original assets and behavior, scans correctly, survi
 
 - Preserve the finite vanilla world as the unchanged home map and enter generated space through an explicit gateway.
 - Generate deterministic sector and chunk addresses from a per-save expedition seed.
-- Prove a command-created, collidable, fully removable single seabed chunk before enabling automatic streaming. *(implemented for 0.12.0 field testing)*
+- Prove a command-created, collidable, fully removable single seabed chunk before enabling automatic streaming. *(0.12.0 passed creation, terrain/collision inspection, removal, manifest preservation, and full-restart inactivity on 2026-09-26)*
 - Stream and pool only a bounded local chunk window.
 - Generate additive seam-safe terrain, colliders, biome dressing, fauna, and locations from chunk descriptors.
 - Persist generator version, discoveries, removed resources, placed objects, and other player deltas rather than complete generated chunks.
