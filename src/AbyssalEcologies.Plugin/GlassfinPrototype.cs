@@ -10,9 +10,11 @@ internal static class GlassfinPrototype
     private static Texture2D? _skinTexture;
     private static Texture2D? _encyclopediaTexture;
     private static Sprite? _icon;
+    private static Sprite? _eggIcon;
     private static AudioClip? _filterCall;
 
     public static Sprite Icon => _icon ??= CreateIcon();
+    public static Sprite EggIcon => _eggIcon ??= CreateEggIcon();
     public static Texture2D EncyclopediaTexture => _encyclopediaTexture ??= CreateEncyclopediaTexture();
 
     public static bool TryReplaceVisuals(GameObject creature, out string detail)
@@ -47,6 +49,45 @@ internal static class GlassfinPrototype
         {
             detail = exception.Message;
             Plugin.Log.LogError($"Original Glassfin visual construction failed; retaining the Peeper rollback visual: {exception}");
+            return false;
+        }
+    }
+
+    public static bool TryReplaceEggVisuals(GameObject egg, out string detail)
+    {
+        try
+        {
+            const string eggModelName = "Abyssal Ecologies Original Glassfin Egg Model";
+            if (egg.transform.Find(eggModelName) != null)
+            {
+                detail = "original Glassfin egg model was already present";
+                return true;
+            }
+
+            var inheritedRenderers = egg.GetComponentsInChildren<Renderer>(true);
+            var inheritedMaterial = inheritedRenderers.Length == 0 ? null : inheritedRenderers[0].sharedMaterial;
+            var root = new GameObject(eggModelName).transform;
+            root.SetParent(egg.transform, false);
+            var shellMaterial = CreateMaterial(inheritedMaterial, new Color(0.08f, 0.58f, 0.66f, 0.96f), new Color(0.08f, 0.9f, 1f, 1f));
+            var veilMaterial = CreateMaterial(inheritedMaterial, new Color(0.18f, 0.9f, 0.86f, 0.78f), new Color(0.18f, 1f, 1f, 1f));
+            var shell = CreateMeshPart("Glassfin Egg Shell", root, CreateEllipsoidMesh(12, 9, 0.38f, 0.52f, 0.38f), shellMaterial);
+            shell.Transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            for (var index = 0; index < 3; index++)
+            {
+                var veil = CreateMeshPart($"Glassfin Egg Veil {index + 1}", root, CreateFinMesh(0.22f, 0.3f, 0.025f, false), veilMaterial);
+                veil.Transform.localPosition = new Vector3(0f, -0.08f, 0f);
+                veil.Transform.localRotation = Quaternion.Euler(0f, index * 120f, 70f);
+            }
+
+            foreach (var renderer in inheritedRenderers)
+                renderer.enabled = false;
+            detail = "procedural mineral shell with three translucent anchoring veils";
+            return true;
+        }
+        catch (Exception exception)
+        {
+            detail = exception.Message;
+            Plugin.Log.LogError($"Original Glassfin egg visual construction failed; retaining the vanilla egg rollback visual: {exception}");
             return false;
         }
     }
@@ -249,6 +290,25 @@ internal static class GlassfinPrototype
                 : clear);
         }
         texture.SetPixel(44, 36, new Color(0.02f, 0.08f, 0.12f, 1f));
+        texture.Apply();
+        return Sprite.Create(texture, new Rect(0f, 0f, 64f, 64f), new Vector2(0.5f, 0.5f), 100f);
+    }
+
+    private static Sprite CreateEggIcon()
+    {
+        var texture = new Texture2D(64, 64, TextureFormat.RGBA32, false) { name = "Abyssal Ecologies Glassfin Egg Icon" };
+        var clear = new Color(0f, 0f, 0f, 0f);
+        for (var y = 0; y < 64; y++)
+        for (var x = 0; x < 64; x++)
+        {
+            var nx = (x - 31.5f) / 17f;
+            var ny = (y - 31.5f) / 23f;
+            var shell = (nx * nx) + (ny * ny) <= 1f;
+            var stripe = ((x + y) / 6) % 2 == 0;
+            texture.SetPixel(x, y, shell
+                ? stripe ? new Color(0.1f, 0.82f, 0.86f, 0.95f) : new Color(0.06f, 0.46f, 0.58f, 0.95f)
+                : clear);
+        }
         texture.Apply();
         return Sprite.Create(texture, new Rect(0f, 0f, 64f, 64f), new Vector2(0.5f, 0.5f), 100f);
     }

@@ -57,6 +57,7 @@ internal static class ContentRegistrar
     private static int _registeredPlacementCount;
     private static bool _useOriginalGlassfin = true;
     private static string _glassfinRegistrationDetail = "not registered";
+    private static string _glassfinEggRegistrationDetail = "not registered";
 
     private static readonly ContentDefinition[] Definitions =
     {
@@ -96,7 +97,7 @@ internal static class ContentRegistrar
         var registered = RegisteredTechTypes.ContainsKey("glassfin") ? "yes" : "no";
         var controllers = UnityEngine.Object.FindObjectsOfType<GlassfinPrototypeController>();
         var feeding = controllers.Count(controller => controller.IsFeeding);
-        return $"AE Glassfin prototype: enabled={_useOriginalGlassfin}, registered={registered}, active={controllers.Length}, filterFeeding={feeding}, callsPlayed={GlassfinPrototypeController.CallCount}, assets={_glassfinRegistrationDetail}.";
+        return $"AE Glassfin prototype: enabled={_useOriginalGlassfin}, registered={registered}, active={controllers.Length}, filterFeeding={feeding}, callsPlayed={GlassfinPrototypeController.CallCount}, assets={_glassfinRegistrationDetail}, egg={_glassfinEggRegistrationDetail}.";
     }
 
     public static SpawnRegistrationMetrics RegisterWorldSpawns(GeneratedWorld world)
@@ -220,9 +221,6 @@ internal static class ContentRegistrar
         if (originalGlassfin)
         {
             const string encyclopediaKey = "AbyssalEcologiesGlassfin";
-            prefab.CreateCreatureEgg(1)
-                .WithRequiredLargeAcuSize(1)
-                .SetAcidImmune(true);
             prefab.AddOnRegister(() =>
             {
                 PDAHandler.AddEncyclopediaEntry(
@@ -239,9 +237,48 @@ internal static class ContentRegistrar
         }
         prefab.Register();
         RegisteredTechTypes.Add(definition.Id, prefab.Info.TechType);
+        if (originalGlassfin)
+            RegisterGlassfinEgg(prefab.Info.TechType);
         Plugin.Log.LogInfo(originalGlassfin
             ? $"Registered '{definition.Id}' with original procedural visuals/audio, scanner entry, and hatchable egg on the proven '{definition.SourceTechType}' gameplay shell."
             : $"Registered '{definition.Id}' definition from proven source TechType '{definition.SourceTechType}'.");
+    }
+
+    private static void RegisterGlassfinEgg(TechType glassfinTechType)
+    {
+        if (!Enum.TryParse("RabbitRayEgg", ignoreCase: false, out TechType sourceEggTechType))
+        {
+            _glassfinEggRegistrationDetail = "rollback: RabbitRayEgg source is unavailable";
+            Plugin.Log.LogWarning("Glassfin egg registration skipped because the RabbitRayEgg TechType is unavailable in this game build.");
+            return;
+        }
+
+        var info = PrefabInfo
+            .WithTechType(
+                "AbyssalEcologies_glassfin_egg",
+                "Glassfin Egg",
+                "A mineral-shelled egg with translucent anchoring veils.")
+            .WithIcon(GlassfinPrototype.EggIcon);
+        var egg = new CustomPrefab(info);
+        var template = new EggTemplate(info, sourceEggTechType)
+            .WithHatchingCreature(glassfinTechType)
+            .WithHatchingTime(1.5f)
+            .WithMass(2f)
+            .WithMaxHealth(35f)
+            .SetUndiscoveredTechType()
+            .OnModifyPrefab(gameObject =>
+            {
+                if (GlassfinPrototype.TryReplaceEggVisuals(gameObject, out var detail))
+                    _glassfinEggRegistrationDetail = detail;
+                else
+                    _glassfinEggRegistrationDetail = $"vanilla egg rollback visual active: {detail}";
+            });
+        egg.SetGameObject(template);
+        egg.CreateCreatureEgg(1)
+            .WithRequiredLargeAcuSize(1)
+            .SetAcidImmune(true);
+        egg.Register();
+        Plugin.Log.LogInfo("Registered a distinct hatchable Glassfin egg with an original procedural shell on the proven Rabbit Ray egg gameplay shell.");
     }
 
     private static SpawnLocation ToSpawnLocation(string contentId, GeneratedPlacement placement)
