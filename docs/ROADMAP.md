@@ -52,11 +52,13 @@ Exit gate: regions are visually and mechanically distinct, readable from approac
 
 ## Milestone 5 — locations of interest
 
-- Add procedural research camps, natural arches, fossil beds, and small story caches assembled from validated modules.
+- Add procedural wrecks, research camps, survey sites, natural arches, fossil beds, and story caches assembled from validated modules.
 - Generate navigable layouts with guaranteed entrances and scanner/loot reachability.
+- Generate coherent incident histories expressed through linked PDA notes, logs, physical evidence, environmental storytelling, and deterministic clue chains.
+- Add rare internally consistent anomalies and weird discoveries that reward exploration without gating required progression.
 - Separate cosmetic variety from progression-critical content; critical rewards use deterministic guarantees rather than random chance.
 
-Exit gate: every generated location has a reachable entrance, a safe return path, and deterministic progression rewards.
+Exit gate: every generated location has a reachable entrance, a safe return path, internally consistent evidence and documents, and deterministic progression rewards.
 
 ## Milestone 6 — compatibility and release
 

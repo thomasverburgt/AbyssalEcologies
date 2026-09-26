@@ -46,6 +46,7 @@ The expedition-world decision and its save/streaming invariants are defined in [
 - Restart-only disposable-save regeneration through `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION`, with a timestamped byte-for-byte backup of the prior manifest under `BepInEx/config/AbyssalEcologies/manifest-backups`.
 - A game-independent generator check executable.
 - Game-independent COA2 sector/chunk addresses, deterministic terrain/content seeds, shared seam-height samples, negative-coordinate handling, and bounded streaming-window checks.
+- A documented narrative-archaeology grammar for future procedural wrecks, linked notes and logs, coherent local histories, physical clues, and rare anomalous discoveries.
 
 ## Requirements
 

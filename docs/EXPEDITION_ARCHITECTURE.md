@@ -15,6 +15,7 @@ Abyssal Ecologies will pursue **COA2: logically unbounded expedition sectors** o
 - Shared terrain vertices are sampled from global integer coordinates so adjacent chunks produce byte-identical seam heights.
 - Unmodified chunks are regenerated rather than serialized in full.
 - Save data records the seed, generator version, visited sectors, discoveries, resource removals, placed objects, and other player-caused deltas.
+- Wrecks, notes, logs, local histories, and anomalous discoveries are generated from versioned authored narrative grammars; a sector's physical evidence and documents must share one deterministic event history.
 - Sector transitions keep Unity coordinates bounded. A sector is logically adjacent to its neighbors even when the implementation uses a controlled transfer rather than a continuous global coordinate.
 - Player construction in expedition space remains disabled until stable object identity, delta persistence, vehicle transfer, death/respawn, and recovery are proven.
 - Every runtime experiment begins disabled, is confined to the disposable test save, and has an explicit cleanup or rollback path.
@@ -54,6 +55,20 @@ The initial biome grammar selects Glass Kelp Garden, Ember Trench, or Ghostlight
 8. Gateway, sector transition, vehicle transfer, death/respawn, and recovery.
 9. Deterministic modular locations of interest with navigation guarantees.
 10. Long-distance, save/restart, memory, recovery, and compatibility endurance tests.
+
+## Narrative archaeology
+
+Expedition sectors carry discoverable histories rather than isolated random props. A narrative seed selects an authored incident grammar containing a group, purpose, sequence of events, failure or mystery, surviving evidence, and possible unresolved thread. The location assembler then expresses that same history through geometry and placement:
+
+- modular wreck hulls, damaged equipment, abandoned camps, survey platforms, vehicles, cargo fields, and emergency shelters;
+- ordered PDA notes, personal logs, research records, maps, warnings, maintenance entries, and incomplete transmissions;
+- environmental evidence such as impact trails, breached compartments, scattered supplies, unusual growth, missing personnel, defensive damage, or deliberately sealed rooms;
+- deterministic clue chains that can span several nearby chunks or sectors;
+- rare anomalies and inexplicable phenomena that remain internally consistent without blocking required progression.
+
+Text is selected and parameterized from reviewed authored fragments, not generated as unconstrained random prose at runtime. Names, dates, roles, locations, causes, and clue order come from one incident record so documents cannot contradict the physical scene. Critical rewards and required conclusions use deterministic guarantees; optional interpretations and weirdness may remain ambiguous.
+
+The novelty director tracks incident families, wreck silhouettes, document voices, anomaly types, and resolution patterns so adjacent sectors do not repeat the same story with different colors.
 
 ## First runtime gate
 

@@ -67,7 +67,7 @@ Replace placeholder plants and landmarks with modular original assets. Add local
 
 ### Locations of interest
 
-Assemble research camps, fossil beds, natural arches, and small story caches from validated modules. Every layout must guarantee an entrance, return path, reachable interactions, and deterministic progression rewards.
+Assemble wrecks, research camps, survey sites, fossil beds, natural arches, and story caches from validated modules. Each location receives a deterministic authored incident history expressed through linked notes, logs, physical evidence, clue order, and occasional internally consistent weirdness. Every layout must guarantee an entrance, return path, reachable interactions, coherent evidence, and deterministic progression rewards.
 
 ### Compatibility and release
 
