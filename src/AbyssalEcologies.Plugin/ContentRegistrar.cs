@@ -24,7 +24,8 @@ internal static class ContentRegistrar
     private const int MinimumFoundationTerrainHits = 5;
     private const float MinimumFoundationThickness = 1.5f;
     private const float MaximumFoundationThickness = 18f;
-    private const float FloraSiteOutwardOffset = 8f;
+    private const int FloraSiteRingSampleCount = 8;
+    private const float FloraSiteRingRadius = 6f;
     private static readonly Vector2[] LandmarkSupportSamples =
     {
         new(0f, 0f),
@@ -100,7 +101,8 @@ internal static class ContentRegistrar
             var floraSites = region.Placements
                 .Where(placement => placement.Kind == PlacementKind.Flora)
                 .OrderBy(placement => HorizontalDistanceSquared(placement.Position, landmark.Position))
-                .Select(placement => OutwardFloraSite(landmark.Position, placement.Position))
+                .Take(8)
+                .Select(placement => placement.Position)
                 .ToArray();
             LandmarkSitePlans.Add(new LandmarkSitePlan(landmark.ContentId, landmark.Position, floraSites));
         }
@@ -306,26 +308,22 @@ internal static class ContentRegistrar
             .FirstOrDefault();
         if (plan != null && HorizontalDistanceSquared(plan.LandmarkPosition, origin) < 1f)
         {
-            foreach (var site in plan.FloraSites)
-                yield return site;
+            var phase = (stableOffset & 255) * (Mathf.PI * 2f / 256f);
+            foreach (var flora in plan.FloraSites)
+            {
+                for (var index = 0; index < FloraSiteRingSampleCount; index++)
+                {
+                    var angle = phase + (index * Mathf.PI * 2f / FloraSiteRingSampleCount);
+                    yield return new WorldPoint(
+                        flora.X + (Mathf.Cos(angle) * FloraSiteRingRadius),
+                        origin.Y,
+                        flora.Z + (Mathf.Sin(angle) * FloraSiteRingRadius));
+                }
+            }
         }
 
         foreach (var site in PlacementSearchPattern.Around(origin, stableOffset, LandmarkSearchRadius).Skip(1))
             yield return site;
-    }
-
-    private static WorldPoint OutwardFloraSite(WorldPoint landmark, WorldPoint flora)
-    {
-        var dx = flora.X - landmark.X;
-        var dz = flora.Z - landmark.Z;
-        var length = (float)Math.Sqrt((dx * dx) + (dz * dz));
-        if (length < 0.01f)
-            return flora;
-
-        return new WorldPoint(
-            flora.X + ((dx / length) * FloraSiteOutwardOffset),
-            landmark.Y,
-            flora.Z + ((dz / length) * FloraSiteOutwardOffset));
     }
 
     private static float HorizontalDistanceSquared(WorldPoint first, WorldPoint second)
