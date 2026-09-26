@@ -260,6 +260,7 @@ internal static class ContentRegistrar
                 "A mineral-shelled egg with translucent anchoring veils.")
             .WithIcon(GlassfinPrototype.EggIcon);
         var egg = new CustomPrefab(info);
+        _glassfinEggRegistrationDetail = $"registered as {info.TechType}; awaiting first instantiation";
         var template = new EggTemplate(info, sourceEggTechType)
             .WithHatchingCreature(glassfinTechType)
             .WithHatchingTime(1.5f)
