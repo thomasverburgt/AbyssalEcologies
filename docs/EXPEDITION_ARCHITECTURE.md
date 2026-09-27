@@ -81,7 +81,7 @@ Carrier dimensions, docking envelopes, and safe arrival requirements must be fix
 
 1. Deterministic address, seed, seam, and streaming-window core checks. *(implemented)*
 2. One temporary additive seabed chunk created and removed by diagnostic commands.
-3. Seam-safe neighboring terrain chunks with colliders.
+3. Seam-safe neighboring terrain chunks with colliders. *(implemented for 0.13.0 field testing)*
 4. Bounded 3 by 3 streaming and pooling around a test anchor.
 5. Biome grammar and transition chunks using the existing three biome families.
 6. Flora, fauna, landmark, and performance budgets per active chunk.
@@ -107,3 +107,5 @@ The novelty director tracks incident families, wreck silhouettes, document voice
 ## First runtime gate
 
 Version 0.12.0's diagnostic-only single-chunk spike passed field testing on 2026-09-26. It generated one original 256-metre collidable seabed mesh at a controlled below-map staging anchor, reported 625 vertices, 1,152 triangles, an estimated 33.0 KiB mesh, and +32.0 KiB managed memory, then removed its runtime root, collider, mesh, and material on command. A save/full restart returned inactive without altering the schema-3 home-world manifest. The deep staging pocket required a flashlight, so later diagnostic slices provide temporary inspection lighting without treating it as production biome lighting.
+
+Version 0.13.0 implements the next diagnostic gate as a 2 by 2 grid of four independent chunk meshes and colliders. It measures all four shared borders at runtime, adds removable point lights and two color-coded seam traces for field inspection, and destroys the grid and diagnostic aids atomically. Automatic streaming remains disabled pending field validation.
