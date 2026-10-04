@@ -1,4 +1,4 @@
-Abyssal Ecologies 0.14.1
+Abyssal Ecologies 0.14.2
 
 Requirements:
 - Original Subnautica (2018), current non-Legacy desktop branch
@@ -20,9 +20,9 @@ Install:
 12. Save, fully restart, revisit AE2, and repeat `ae_fauna` and `ae_perf`. If an Alien Containment Unit is available, also verify that a Glassfin egg is accepted and hatches. Set `Fauna.UseOriginalGlassfinPrototype=false` only when testing the Peeper-derived rollback visual.
 13. Run `goto ae1`, wait 12 seconds, and run `ae_fauna`. Inspect the original Cinder Ray's broad manta body, flapping wings, tail, and thermal pulse; scan it for the Cinder Ray databank entry. Run `item AbyssalEcologies_cinder_ray_egg` to inspect its distinct egg, then run `ae_perf`. Use `Fauna.UseOriginalCinderRayPrototype=false` only for the Rabbit Ray-derived rollback visual.
 14. Run `goto ae3`, wait 12 seconds, and run `ae_fauna`. Inspect the original Lantern Skate's blue kite body, drifting veils, paired light ribbons, and cold-light pulse; scan it for the Lantern Skate databank entry. Run `item AbyssalEcologies_lantern_skate_egg` to inspect its distinct egg, then run `ae_perf`. Use `Fauna.UseOriginalLanternSkatePrototype=false` only for the Jellyray-derived rollback visual.
-15. For the 0.14.1 streaming test, begin with inactive status, run `ae_chunk_create CONFIRM_EXPEDITION_STREAMING_SPIKE`, and require `active=9/9`, `colliders=9/9`, `poolSlots=9`, `maxSeamGap=0.000000m`, and `determinismMismatches=0`. Run `goto aechunk`, cross both colored seam directions, and travel east across at least two boundaries. Require rising reuse/retirement/window-update counts while active terrain remains exactly nine; an adjacent move must report `lastTransition=6 retained/3 added/3 removed`. Use `goto aechunk_w`, return with `goto aechunk`, then exercise `goto aechunk_n` and `goto aechunk_s`; require zero deterministic mismatches, faults, duplicate terrain, cracks, steps, snags, collision loss, or fall-through. Leave with `warp 0 0 0`, remove the window, and require inactive status. A true full-process restart must remain inactive with the home-world manifest and performance unchanged.
+15. For the 0.14.2 streaming test, begin with inactive status, run `ae_chunk_create CONFIRM_EXPEDITION_STREAMING_SPIKE`, and require `active=9/9`, `colliders=9/9`, `poolSlots=9`, `maxSeamGap=0.000000m`, and `determinismMismatches=0`. Run `goto aechunk`, cross both colored seam directions, and travel east across at least two boundaries. Require rising reuse/retirement/window-update counts while active terrain remains exactly nine; an adjacent move must report `lastTransition=6 retained/3 added/3 removed`. Use `goto aechunk_w`, return with `goto aechunk`, then exercise `goto aechunk_n` and `goto aechunk_s`; require zero deterministic mismatches, faults, duplicate terrain, cracks, steps, snags, collision loss, or fall-through. Leave with `warp 0 0 0`, remove the window, and require inactive status. A true full-process restart must remain inactive with the home-world manifest and performance unchanged.
 
-Version 0.14.0 is rejected: its first field run reported zero of nine colliders ready. Do not use it as a fallback. Version 0.14.1 changes collider activation order and hard-fails any incomplete nine-collider window.
+Versions 0.14.0 and 0.14.1 are rejected: their field runs established that Unity rejects the dynamic mesh unless both the pooled object and collider component are active before assignment. Do not use them as fallbacks. Version 0.14.2 applies the proven activation order and hard-fails any incomplete nine-collider window.
 
 The 0.12.0 diagnostic chunk procedure passed on 2026-09-26: 625 vertices, 1,152 triangles, ready collider, 33.0 KiB estimated mesh, +32.0 KiB managed memory, visible relief, working collision, complete removal, and inactive status after save/full restart. The home-world manifest remained schema 3, seed 58, three regions, and 123 placements; `ae_perf` passed at 18.4 ms setup, 6.1 ms registration, and +0.88 MiB. The staging pocket required a flashlight, so later diagnostic terrain tests add temporary inspection lighting.
 
@@ -36,7 +36,7 @@ The Cinder Ray functional procedure passed on 2026-09-26, including the visible 
 
 The Lantern Skate functional procedure passed on 2026-09-26, including the visible original kite, scanning/databank unlock, distinct egg creation, and save/full-restart persistence. The fresh process reported 22 active Lantern Skates, the ribbed blue lantern egg shell, and `ae_perf` at 18.0 ms setup, 5.9 ms registration, +0.86 MiB, and 123/123 placements. Containment hatching and final visual polish remain pending.
 
-Restart Subnautica before switching to a different save slot. Version 0.14.1 refuses to mix two per-save manifests in one running game process.
+Restart Subnautica before switching to a different save slot. Version 0.14.2 refuses to mix two per-save manifests in one running game process.
 
 Disposable-save regeneration is deliberately restart-only. `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION` first writes a timestamped byte-for-byte backup under `BepInEx/config/AbyssalEcologies/manifest-backups`, then stages the new deterministic layout in Subnautica's live save cache. The active world does not change until the game is saved, fully quit, and restarted. The command rejects missing confirmation, the active seed, and a second regeneration in the same process.
 
@@ -44,7 +44,7 @@ Temporary removal warning:
 - Back up the save and fully quit before removing the two Abyssal Ecologies DLLs.
 - A save can load temporarily without the mod, but Subnautica logs missing-prefab errors for saved custom instances.
 - Do not save while the mod is missing. Quit and restore the exact DLLs before continuing.
-- Permanent uninstall is not supported or validated in version 0.14.1.
+- Permanent uninstall is not supported or validated in version 0.14.2.
 
 Configuration is created at:
 BepInEx/config/rocks.verburgt.subnautica.abyssalecologies.cfg

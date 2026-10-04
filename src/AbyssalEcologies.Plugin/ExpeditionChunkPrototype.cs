@@ -268,8 +268,8 @@ internal static class ExpeditionChunkPrototype
         slot.Coordinate = descriptor.Coordinate;
         slot.Assigned = true;
         slot.Root.SetActive(true);
-        slot.Collider.sharedMesh = slot.Mesh;
         slot.Collider.enabled = true;
+        slot.Collider.sharedMesh = slot.Mesh;
         if (slot.Collider.sharedMesh == null)
             throw new InvalidOperationException($"Unity rejected the collider mesh for {descriptor.Coordinate}.");
         _assignmentCount++;

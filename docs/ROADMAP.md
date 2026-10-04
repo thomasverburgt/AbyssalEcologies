@@ -36,7 +36,7 @@ Exit gate: each species has original assets and behavior, scans correctly, survi
 - Generate deterministic sector and chunk addresses from a per-save expedition seed.
 - Prove a command-created, collidable, fully removable single seabed chunk before enabling automatic streaming. *(0.12.0 passed creation, terrain/collision inspection, removal, manifest preservation, and full-restart inactivity on 2026-09-26)*
 - Prove independently collidable neighboring chunks share exact runtime borders before enabling automatic streaming. *(0.13.0 passed measured, visual, collision, cleanup, and full-restart field testing on 2026-10-02)*
-- Stream and pool only a bounded local chunk window. *(implemented as the corrected opt-in 0.14.1 nine-slot diagnostic window for field testing)*
+- Stream and pool only a bounded local chunk window. *(implemented as the corrected opt-in 0.14.2 nine-slot diagnostic window for field testing)*
 - Generate additive seam-safe terrain, colliders, biome dressing, fauna, and locations from chunk descriptors.
 - Persist generator version, discoveries, removed resources, placed objects, and other player deltas rather than complete generated chunks.
 - Use discoverable bidirectional arches and a reusable bounded physical staging sector to keep Unity coordinates bounded while logical sector coordinates continue outward.
