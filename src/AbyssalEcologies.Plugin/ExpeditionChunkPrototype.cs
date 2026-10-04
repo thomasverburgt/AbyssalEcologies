@@ -16,7 +16,7 @@ internal static class ExpeditionChunkPrototype
     public const string NorthGotoName = "aechunk_n";
     public const string SouthGotoName = "aechunk_s";
     public static readonly Vector3 Anchor = new(0f, -700f, 0f);
-    public static readonly Vector3 Arrival = new(0f, -642f, 0f);
+    public static readonly Vector3 Arrival = new(0f, -662f, 0f);
     public static readonly Vector3 EastArrival = new(512f, -642f, 0f);
     public static readonly Vector3 WestArrival = new(-512f, -642f, 0f);
     public static readonly Vector3 NorthArrival = new(0f, -642f, 512f);
@@ -140,7 +140,7 @@ internal static class ExpeditionChunkPrototype
 
     private static void CreatePool(Transform parent)
     {
-        var shader = Shader.Find("MarmosetUBER") ?? Shader.Find("Standard") ?? throw new InvalidOperationException("No compatible terrain shader is available.");
+        var shader = Shader.Find("Unlit/Color") ?? Shader.Find("MarmosetUBER") ?? Shader.Find("Standard") ?? throw new InvalidOperationException("No compatible terrain shader is available.");
         for (var index = 0; index < PoolSize; index++)
         {
             var chunk = new GameObject($"AE Pooled Expedition Chunk {index + 1}");
@@ -351,9 +351,9 @@ internal static class ExpeditionChunkPrototype
 
     private static Color BiomeColor(ExpeditionBiome biome) => biome switch
     {
-        ExpeditionBiome.EmberTrench => new Color(0.23f, 0.065f, 0.025f, 1f),
-        ExpeditionBiome.GlassKelpGarden => new Color(0.025f, 0.19f, 0.17f, 1f),
-        _ => new Color(0.04f, 0.095f, 0.24f, 1f)
+        ExpeditionBiome.EmberTrench => new Color(0.88f, 0.16f, 0.035f, 1f),
+        ExpeditionBiome.GlassKelpGarden => new Color(0.025f, 0.82f, 0.61f, 1f),
+        _ => new Color(0.07f, 0.3f, 1f, 1f)
     };
 
     private static Color BiomeGlow(ExpeditionBiome biome) => biome switch
