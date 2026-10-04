@@ -53,6 +53,7 @@ internal static class ExpeditionChunkPrototype
     private static double _maximumUpdateMilliseconds;
     private static bool _faulted;
     private static string _lastFault = string.Empty;
+    private static string _terrainShaderName = "unavailable";
 
     public static bool IsActive => _root != null;
 
@@ -84,7 +85,7 @@ internal static class ExpeditionChunkPrototype
             return failure;
         }
 
-        var result = $"AE expedition streaming CREATED: seed={worldSeed}, center={_center}, active={Active.Count}/{PoolSize}, coordinates={ActiveCoordinateText()}, biomes={ActiveBiomeText()}, transitionChunks={TransitionChunkCount()}/{PoolSize}, vertices={TotalVertices()}, triangles={TotalTriangles()}, colliders={ReadyColliderCount()}/{PoolSize}, maxSeamGap={_maximumSeamGap:0.000000}m, poolSlots={Pool.Count}, assignments={_assignmentCount}, reused={_reusedAssignmentCount}, retired={_retiredCount}, lastTransition={_lastRetainedCount} retained/{_lastAddedCount} added/{_lastRemovedCount} removed, fingerprints={GeometryFingerprints.Count}/{FingerprintCacheLimit}, seamMarkers={SeamLines.Count}, estimatedMesh={EstimatedMeshBytes() / 1024d:0.0} KiB, managedDelta={_managedDelta / 1024d:+0.0;-0.0;0.0} KiB, initialUpdate={_lastUpdateMilliseconds:0.0}ms. Run 'goto {GotoName}', travel across chunk boundaries, and inspect ae_chunk_status.";
+        var result = $"AE expedition streaming CREATED: seed={worldSeed}, center={_center}, active={Active.Count}/{PoolSize}, coordinates={ActiveCoordinateText()}, biomes={ActiveBiomeText()}, transitionChunks={TransitionChunkCount()}/{PoolSize}, terrainShader={_terrainShaderName}, vertices={TotalVertices()}, triangles={TotalTriangles()}, colliders={ReadyColliderCount()}/{PoolSize}, maxSeamGap={_maximumSeamGap:0.000000}m, poolSlots={Pool.Count}, assignments={_assignmentCount}, reused={_reusedAssignmentCount}, retired={_retiredCount}, lastTransition={_lastRetainedCount} retained/{_lastAddedCount} added/{_lastRemovedCount} removed, fingerprints={GeometryFingerprints.Count}/{FingerprintCacheLimit}, seamMarkers={SeamLines.Count}, estimatedMesh={EstimatedMeshBytes() / 1024d:0.0} KiB, managedDelta={_managedDelta / 1024d:+0.0;-0.0;0.0} KiB, initialUpdate={_lastUpdateMilliseconds:0.0}ms. Run 'goto {GotoName}', travel across chunk boundaries, and inspect ae_chunk_status.";
         Plugin.Log.LogWarning(result);
         return result;
     }
@@ -140,7 +141,8 @@ internal static class ExpeditionChunkPrototype
 
     private static void CreatePool(Transform parent)
     {
-        var shader = Shader.Find("Unlit/Color") ?? Shader.Find("MarmosetUBER") ?? Shader.Find("Standard") ?? throw new InvalidOperationException("No compatible terrain shader is available.");
+        var shader = Shader.Find("Sprites/Default") ?? throw new InvalidOperationException("The proven visible Sprites/Default diagnostic shader is unavailable.");
+        _terrainShaderName = shader.name;
         for (var index = 0; index < PoolSize; index++)
         {
             var chunk = new GameObject($"AE Pooled Expedition Chunk {index + 1}");
@@ -149,6 +151,8 @@ internal static class ExpeditionChunkPrototype
             var filter = chunk.AddComponent<MeshFilter>();
             filter.sharedMesh = mesh;
             var renderer = chunk.AddComponent<MeshRenderer>();
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
             var material = new Material(shader) { name = $"AE Pooled Expedition Material {index + 1}" };
             renderer.sharedMaterial = material;
             var collider = chunk.AddComponent<MeshCollider>();
@@ -344,6 +348,7 @@ internal static class ExpeditionChunkPrototype
             glow = Color.Lerp(glow, Color.white, 0.22f);
         }
         material.name = $"AE Expedition Material {descriptor.Coordinate.X},{descriptor.Coordinate.Z} [{descriptor.Biome}; {descriptor.TransitionEdges}]";
+        material.color = color;
         if (material.HasProperty("_Color")) material.SetColor("_Color", color);
         if (material.HasProperty("_GlowColor")) material.SetColor("_GlowColor", glow);
         if (material.HasProperty("_GlowStrength")) material.SetFloat("_GlowStrength", descriptor.IsTransition ? 0.7f : 0.35f);
@@ -475,6 +480,7 @@ internal static class ExpeditionChunkPrototype
         _maximumUpdateMilliseconds = 0d;
         _faulted = false;
         _lastFault = string.Empty;
+        _terrainShaderName = "unavailable";
     }
 
     private sealed class ChunkSlot
