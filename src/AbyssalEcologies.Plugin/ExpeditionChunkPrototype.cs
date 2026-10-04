@@ -95,7 +95,6 @@ internal static class ExpeditionChunkPrototype
         if (_root == null)
             return "AE expedition streaming: inactive; no diagnostic runtime terrain exists.";
 
-        _managedDelta = GC.GetTotalMemory(false) - _managedMemoryBefore;
         var playerCoordinate = Player.main == null ? "unavailable" : CoordinateForPosition(Player.main.transform.position).ToString();
         var state = _faulted ? $"FAULTED({_lastFault})" : "ACTIVE";
         return $"AE expedition streaming {state}: seed={_worldSeed}, center={_center}, playerChunk={playerCoordinate}, active={Active.Count}/{PoolSize}, coordinates={ActiveCoordinateText()}, vertices={TotalVertices()}, triangles={TotalTriangles()}, colliders={ReadyColliderCount()}/{PoolSize}, maxSeamGap={_maximumSeamGap:0.000000}m, poolSlots={Pool.Count}, assignments={_assignmentCount}, reused={_reusedAssignmentCount}, retired={_retiredCount}, windowUpdates={_windowUpdateCount}, lastTransition={_lastRetainedCount} retained/{_lastAddedCount} added/{_lastRemovedCount} removed, determinismMismatches={_determinismMismatchCount}, fingerprints={GeometryFingerprints.Count}/{FingerprintCacheLimit}, seamMarkers={SeamLines.Count}, estimatedMesh={EstimatedMeshBytes() / 1024d:0.0} KiB, managedDelta={_managedDelta / 1024d:+0.0;-0.0;0.0} KiB, lastUpdate={_lastUpdateMilliseconds:0.0}ms, maxUpdate={_maximumUpdateMilliseconds:0.0}ms.";
@@ -231,6 +230,9 @@ internal static class ExpeditionChunkPrototype
             throw new InvalidOperationException("Transition retired more pool slots than it added.");
         if (Active.Count != PoolSize || Active.Values.Distinct().Count() != PoolSize)
             throw new InvalidOperationException($"Streaming bound failed: active={Active.Count}, uniqueSlots={Active.Values.Distinct().Count()}, expected={PoolSize}.");
+        var readyColliders = ReadyColliderCount();
+        if (readyColliders != PoolSize)
+            throw new InvalidOperationException($"Collider readiness failed: ready={readyColliders}, expected={PoolSize}.");
 
         _center = center;
         UpdateSeamMarkers(center);
@@ -245,6 +247,7 @@ internal static class ExpeditionChunkPrototype
     {
         var wasAssigned = slot.Assigned;
         slot.Root.SetActive(false);
+        slot.Collider.enabled = false;
         slot.Collider.sharedMesh = null;
         var fingerprint = BuildMesh(slot.Mesh, descriptor.Coordinate);
         if (GeometryFingerprints.TryGetValue(descriptor.Coordinate, out var priorFingerprint))
@@ -262,10 +265,13 @@ internal static class ExpeditionChunkPrototype
         ApplyTerrainMaterial(slot.Material, descriptor.Biome, descriptor.Coordinate);
         slot.Root.name = $"AE Pooled Chunk {descriptor.Coordinate.X},{descriptor.Coordinate.Z} [{descriptor.Biome}]";
         slot.Root.transform.localPosition = new Vector3(descriptor.Coordinate.X * Settings.ChunkSize, 0f, descriptor.Coordinate.Z * Settings.ChunkSize);
-        slot.Collider.sharedMesh = slot.Mesh;
         slot.Coordinate = descriptor.Coordinate;
         slot.Assigned = true;
         slot.Root.SetActive(true);
+        slot.Collider.sharedMesh = slot.Mesh;
+        slot.Collider.enabled = true;
+        if (slot.Collider.sharedMesh == null)
+            throw new InvalidOperationException($"Unity rejected the collider mesh for {descriptor.Coordinate}.");
         _assignmentCount++;
         if (wasAssigned) _reusedAssignmentCount++;
     }
