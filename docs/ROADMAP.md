@@ -37,7 +37,7 @@ Exit gate: each species has original assets and behavior, scans correctly, survi
 - Prove a command-created, collidable, fully removable single seabed chunk before enabling automatic streaming. *(0.12.0 passed creation, terrain/collision inspection, removal, manifest preservation, and full-restart inactivity on 2026-09-26)*
 - Prove independently collidable neighboring chunks share exact runtime borders before enabling automatic streaming. *(0.13.0 passed measured, visual, collision, cleanup, and full-restart field testing on 2026-10-02)*
 - Stream and pool only a bounded local chunk window. *(0.14.2 passed nine-slot diagnostic field testing on 2026-10-04)*
-- Assign deterministic clustered biome families and symmetric transition edges. *(implemented as the opt-in 0.15.0 diagnostic slice for field testing)*
+- Assign deterministic clustered biome families and symmetric transition edges. *(0.15.2 passed diagnostic field testing on 2026-10-04)*
 - Generate additive seam-safe terrain, colliders, biome dressing, fauna, and locations from chunk descriptors.
 - Persist generator version, discoveries, removed resources, placed objects, and other player deltas rather than complete generated chunks.
 - Use discoverable bidirectional arches and a reusable bounded physical staging sector to keep Unity coordinates bounded while logical sector coordinates continue outward.
