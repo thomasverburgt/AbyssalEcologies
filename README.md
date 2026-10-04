@@ -2,11 +2,11 @@
 
 Abyssal Ecologies is an experimental mod for the original **Subnautica (2018)** that currently adds deterministic, procedurally arranged **micro-biomes** to the base game's world and is evolving toward logically unbounded procedural expedition sectors. It is not for Subnautica 2 or Subnautica: Below Zero. The supported direction keeps the finite vanilla map unchanged and uses deterministic, bounded local streaming behind explicit expedition transitions.
 
-The current `0.13.0` vertical slice expands the accepted COA2 terrain spike into a diagnostic 2 by 2 grid of four independently generated chunks. Each chunk has its own mesh and collider; shared borders derive from identical global samples, runtime diagnostics report the maximum seam gap, and removable lights plus bright seam traces make the -700 metre staging pocket inspectable. The accepted home-world micro-biomes and three fauna prototypes remain unchanged.
+The current `0.14.0` vertical slice advances the accepted COA2 terrain grid into an explicitly activated 3 by 3 streaming window. Exactly nine pooled chunk objects follow the player at expedition depth; crossing a logical chunk boundary retains six chunks, retires three, and reuses those three slots for the new edge. Runtime diagnostics report coordinates, pool activity, collider readiness, seam gap, deterministic-revisit mismatches, timing, and memory. The accepted home-world micro-biomes and three fauna prototypes remain unchanged.
 
 ## Project status
 
-**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. Version 0.13.0 retains all accepted 0.12.0 behavior while expanding the opt-in runtime terrain experiment below the vanilla map to four seam-sharing chunks. It does not modify Subnautica's baked terrain, the schema-3 home-world manifest, or save data. Existing schema-1 deterministic and schema-2 terrain-resolved manifests migrate without moving saved coordinates; exclusions introduced after a legacy layout was created remain compatibility warnings.
+**Prototype — use disposable saves.** Content definitions register at startup, but layout generation waits until a save has loaded. Version 0.14.0 retains all accepted 0.13.0 behavior while replacing the static four-chunk diagnostic with an opt-in, bounded nine-chunk streaming and pooling experiment below the vanilla map. It does not modify Subnautica's baked terrain, the schema-3 home-world manifest, or save data. Existing schema-1 deterministic and schema-2 terrain-resolved manifests migrate without moving saved coordinates; exclusions introduced after a legacy layout was created remain compatibility warnings.
 
 Version 0.3.2 passed its representative in-game regression on 2026-09-24: initial load, all three regions, all flora/fauna/landmarks, the Thermal Spire, save, full restart, reload, and revisit.
 
@@ -48,7 +48,7 @@ The required sector-portable carrier and the living-archive, sector-discovery, a
 - Restart-only disposable-save regeneration through `ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION`, with a timestamped byte-for-byte backup of the prior manifest under `BepInEx/config/AbyssalEcologies/manifest-backups`.
 - A game-independent generator check executable.
 - Game-independent COA2 sector/chunk addresses, deterministic terrain/content seeds, shared seam-height samples, negative-coordinate handling, and bounded streaming-window checks.
-- An opt-in `ae_chunk_create`/`ae_chunk_status`/`ae_chunk_remove` diagnostic grid of four deterministic 256-metre collidable seabed chunks at a bounded staging anchor, with measured shared borders, temporary lights, and color-coded seam traces.
+- An opt-in `ae_chunk_create`/`ae_chunk_status`/`ae_chunk_remove` diagnostic 3 by 3 streaming window with exactly nine pooled deterministic terrain objects, colliders and lights, four moving seam traces, deterministic-revisit checks, and bounded transition metrics.
 - A documented narrative-archaeology grammar for future procedural wrecks, linked notes and logs, coherent local histories, physical clues, and rare anomalous discoveries.
 
 ## Requirements
@@ -102,11 +102,13 @@ For the 0.13.0 expedition seam-grid test, load only the disposable test save and
 
 That procedure passed on 2026-10-02. Seed 58 created four independent collidable chunks with 2,500 vertices, 4,608 triangles, `colliders=4/4`, a measured maximum seam gap of `0.000000m`, a 132.1 KiB estimated mesh total, and a +128.0 KiB managed-memory delta. Both color-coded shared borders were visible, smooth, and collision-safe without cracks, steps, snagging, or fall-through. Atomic removal returned the grid to inactive. A true full-process restart remained inactive, preserved schema 3, seed 58, three regions, and 123 placements, and passed performance at 18.3 ms setup, 6.1 ms registration, and +0.86 MiB.
 
+For the 0.14.0 expedition streaming test, load only the disposable test save and run `ae_chunk_status`; it must report inactive. Run `ae_chunk_create CONFIRM_EXPEDITION_STREAMING_SPIKE`, require `active=9/9`, `colliders=9/9`, `poolSlots=9`, `maxSeamGap=0.000000m`, and `determinismMismatches=0`, then run `goto aechunk`. Cross the yellow east-west and cyan north-south traces on the terrain surface. Continue east across at least two chunk boundaries, run `ae_chunk_status`, and require nine active chunks with positive reused, retired, and window-update counts; an adjacent move must report `lastTransition=6 retained/3 added/3 removed`. Use `goto aechunk_w`, wait one second, return with `goto aechunk`, and require `determinismMismatches=0` after revisiting prior coordinates. Repeat north-south travel using `goto aechunk_n` and `goto aechunk_s`. Reject any crack, height step, snag, duplicate terrain, collision loss, fall-through, active count other than nine, or faulted status. Leave with `warp 0 0 0`, remove the window, and require inactive status. A true full-process restart must remain inactive with the manifest and performance unchanged.
+
 Do not use this prototype on the only copy of an important save. The 0.3.2 layout passed representative in-game inspection, but terrain-aware placement and permanent uninstall remain incomplete.
 
 Temporary removal is recoverable only with care: fully quit, back up the save, quarantine the two Abyssal Ecologies DLLs, and expect missing-prefab errors while the save is loaded without the mod. Do not save in that state. Quit and restore the exact plugin DLLs before continuing; version 0.7.1 restored the unchanged manifest and generated content in the isolated field test. Permanent uninstall remains unsupported.
 
-Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.13.0 safely refuses to mix a second manifest into the active session and stages regeneration only for the next process.
+Restart Subnautica before switching to a different save slot. Nautilus coordinated-spawn registrations are process-wide; version 0.14.0 safely refuses to mix a second manifest into the active session and stages regeneration only for the next process.
 
 ## Isolated Windows test launcher
 

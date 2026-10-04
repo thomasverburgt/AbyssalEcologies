@@ -20,6 +20,10 @@ internal static class DiagnosticCommands
     {
         ConsoleCommandsHandler.RegisterConsoleCommands(typeof(DiagnosticCommands));
         ConsoleCommandsHandler.AddGotoTeleportPosition(ExpeditionChunkPrototype.GotoName, ExpeditionChunkPrototype.Arrival);
+        ConsoleCommandsHandler.AddGotoTeleportPosition(ExpeditionChunkPrototype.EastGotoName, ExpeditionChunkPrototype.EastArrival);
+        ConsoleCommandsHandler.AddGotoTeleportPosition(ExpeditionChunkPrototype.WestGotoName, ExpeditionChunkPrototype.WestArrival);
+        ConsoleCommandsHandler.AddGotoTeleportPosition(ExpeditionChunkPrototype.NorthGotoName, ExpeditionChunkPrototype.NorthArrival);
+        ConsoleCommandsHandler.AddGotoTeleportPosition(ExpeditionChunkPrototype.SouthGotoName, ExpeditionChunkPrototype.SouthArrival);
     }
 
     public static void SetActive(WorldManifest manifest, GeneratedWorld world)
@@ -39,13 +43,13 @@ internal static class DiagnosticCommands
 
     [ConsoleCommand("ae_help")]
     public static string Help() =>
-        $"Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_boundaries [10-300 seconds]; ae_boundaries_off; ae_validate; ae_perf; ae_fauna; ae_grounding; ae_probe REGION; ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION; ae_chunk_create {ExpeditionChunkPrototype.ConfirmationPhrase}; ae_chunk_status; ae_chunk_remove; goto ae1/ae2/ae3/{ExpeditionChunkPrototype.GotoName}.";
+        $"Abyssal Ecologies diagnostics: ae_manifest; ae_bounds [region 1-12, or 0 for all]; ae_boundaries [10-300 seconds]; ae_boundaries_off; ae_validate; ae_perf; ae_fauna; ae_grounding; ae_probe REGION; ae_regenerate NEW_SEED CONFIRM_DISPOSABLE_SAVE_REGENERATION; ae_chunk_create {ExpeditionChunkPrototype.ConfirmationPhrase}; ae_chunk_status; ae_chunk_remove; goto ae1/ae2/ae3/{ExpeditionChunkPrototype.GotoName}/{ExpeditionChunkPrototype.EastGotoName}/{ExpeditionChunkPrototype.WestGotoName}/{ExpeditionChunkPrototype.NorthGotoName}/{ExpeditionChunkPrototype.SouthGotoName}.";
 
     [ConsoleCommand("ae_chunk_create")]
     public static string CreateExpeditionChunk(string confirmation = "")
     {
         if (_world == null)
-            return "AE expedition chunk refused: load a disposable save first.";
+            return "AE expedition streaming refused: load a disposable save first.";
         return ExpeditionChunkPrototype.Create(_world.Seed, confirmation);
     }
 

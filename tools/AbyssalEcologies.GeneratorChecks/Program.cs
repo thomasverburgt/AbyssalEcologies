@@ -32,6 +32,7 @@ Check("expedition sectors are deterministic", ExpeditionSectorsAreDeterministic)
 Check("expedition chunk seams share exact heights", ExpeditionChunkSeamsShareExactHeights);
 Check("expedition negative coordinates map to stable sectors", ExpeditionNegativeCoordinatesMapToStableSectors);
 Check("expedition streaming windows are bounded and unique", ExpeditionStreamingWindowsAreBoundedAndUnique);
+Check("expedition streaming transitions retain and retire bounded edges", ExpeditionStreamingTransitionsRetainAndRetireBoundedEdges);
 Check("expedition detailed terrain seams share exact heights", ExpeditionDetailedTerrainSeamsShareExactHeights);
 
 if (failures.Count > 0)
@@ -397,6 +398,27 @@ static void ExpeditionStreamingWindowsAreBoundedAndUnique()
     Require(window.Count == 25, "radius-two streaming window did not contain 25 chunks");
     Require(window.Select(chunk => chunk.Coordinate).Distinct().Count() == 25, "streaming window contained duplicate chunks");
     Require(window.Any(chunk => chunk.Sector.X < 0 || chunk.Sector.Z < 0), "streaming window did not cross negative sector boundaries");
+}
+
+static void ExpeditionStreamingTransitionsRetainAndRetireBoundedEdges()
+{
+    var generator = new ExpeditionGenerator();
+    var initial = generator.PlanStreamingTransition(88, Array.Empty<ExpeditionChunkCoordinate>(), new ExpeditionChunkCoordinate(0, 0), 1);
+    Require(initial.Desired.Count == 9 && initial.Added.Count == 9 && initial.Retained.Count == 0 && initial.Removed.Count == 0, "initial radius-one transition did not add exactly nine chunks");
+
+    var east = generator.PlanStreamingTransition(88, initial.Desired.Select(chunk => chunk.Coordinate), new ExpeditionChunkCoordinate(1, 0), 1);
+    Require(east.Desired.Count == 9 && east.Retained.Count == 6 && east.Added.Count == 3 && east.Removed.Count == 3, "one-chunk east transition did not retain six and exchange three chunks");
+    Require(east.Added.All(chunk => chunk.Coordinate.X == 2), "east transition added an unexpected coordinate");
+    Require(east.Removed.All(chunk => chunk.X == -1), "east transition retired an unexpected coordinate");
+
+    var north = generator.PlanStreamingTransition(88, east.Desired.Select(chunk => chunk.Coordinate), new ExpeditionChunkCoordinate(1, -1), 1);
+    Require(north.Desired.Count == 9 && north.Retained.Count == 6 && north.Added.Count == 3 && north.Removed.Count == 3, "one-chunk north transition did not retain six and exchange three chunks");
+    Require(north.Desired.Select(chunk => chunk.Coordinate).Distinct().Count() == 9, "transition produced duplicate desired coordinates");
+
+    var revisit = generator.PlanStreamingTransition(88, north.Desired.Select(chunk => chunk.Coordinate), new ExpeditionChunkCoordinate(0, 0), 1);
+    var regenerated = revisit.Desired.Select(ExpeditionSignature).OrderBy(value => value).ToArray();
+    var original = initial.Desired.Select(ExpeditionSignature).OrderBy(value => value).ToArray();
+    Require(regenerated.SequenceEqual(original), "returning to the original center changed deterministic chunk descriptors");
 }
 
 static void ExpeditionDetailedTerrainSeamsShareExactHeights()

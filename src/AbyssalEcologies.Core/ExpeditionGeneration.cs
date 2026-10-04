@@ -78,6 +78,29 @@ public sealed class ExpeditionSectorDescriptor
     public IReadOnlyList<ExpeditionChunkDescriptor> Chunks { get; }
 }
 
+public sealed class ExpeditionStreamingTransition
+{
+    public ExpeditionStreamingTransition(
+        ExpeditionChunkCoordinate center,
+        IReadOnlyList<ExpeditionChunkDescriptor> desired,
+        IReadOnlyList<ExpeditionChunkDescriptor> retained,
+        IReadOnlyList<ExpeditionChunkDescriptor> added,
+        IReadOnlyList<ExpeditionChunkCoordinate> removed)
+    {
+        Center = center;
+        Desired = desired;
+        Retained = retained;
+        Added = added;
+        Removed = removed;
+    }
+
+    public ExpeditionChunkCoordinate Center { get; }
+    public IReadOnlyList<ExpeditionChunkDescriptor> Desired { get; }
+    public IReadOnlyList<ExpeditionChunkDescriptor> Retained { get; }
+    public IReadOnlyList<ExpeditionChunkDescriptor> Added { get; }
+    public IReadOnlyList<ExpeditionChunkCoordinate> Removed { get; }
+}
+
 public sealed class ExpeditionGenerator
 {
     public ExpeditionSectorDescriptor GenerateSector(int worldSeed, ExpeditionSectorCoordinate sector, ExpeditionGenerationSettings? settings = null)
@@ -106,6 +129,33 @@ public sealed class ExpeditionGenerator
         for (var x = center.X - radius; x <= center.X + radius; x++)
             chunks.Add(GenerateChunk(worldSeed, new ExpeditionChunkCoordinate(x, z), settings));
         return chunks;
+    }
+
+    public ExpeditionStreamingTransition PlanStreamingTransition(
+        int worldSeed,
+        IEnumerable<ExpeditionChunkCoordinate> activeCoordinates,
+        ExpeditionChunkCoordinate center,
+        int radius,
+        ExpeditionGenerationSettings? settings = null)
+    {
+        if (activeCoordinates == null) throw new ArgumentNullException(nameof(activeCoordinates));
+        var desired = GenerateStreamingWindow(worldSeed, center, radius, settings);
+        var active = new HashSet<ExpeditionChunkCoordinate>(activeCoordinates);
+        var desiredCoordinates = new HashSet<ExpeditionChunkCoordinate>();
+        var retained = new List<ExpeditionChunkDescriptor>(desired.Count);
+        var added = new List<ExpeditionChunkDescriptor>(desired.Count);
+        foreach (var descriptor in desired)
+        {
+            desiredCoordinates.Add(descriptor.Coordinate);
+            if (active.Contains(descriptor.Coordinate)) retained.Add(descriptor);
+            else added.Add(descriptor);
+        }
+
+        var removed = new List<ExpeditionChunkCoordinate>();
+        foreach (var coordinate in active)
+            if (!desiredCoordinates.Contains(coordinate)) removed.Add(coordinate);
+        removed.Sort((left, right) => left.Z != right.Z ? left.Z.CompareTo(right.Z) : left.X.CompareTo(right.X));
+        return new ExpeditionStreamingTransition(center, desired, retained, added, removed);
     }
 
     public ExpeditionChunkDescriptor GenerateChunk(int worldSeed, ExpeditionChunkCoordinate coordinate, ExpeditionGenerationSettings? settings = null)
