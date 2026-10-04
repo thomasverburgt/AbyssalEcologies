@@ -9,7 +9,7 @@ namespace AbyssalEcologies.Plugin;
 
 internal static class ExpeditionChunkPrototype
 {
-    public const string ConfirmationPhrase = "CONFIRM_EXPEDITION_STREAMING_SPIKE";
+    public const string ConfirmationPhrase = "CONFIRM_EXPEDITION_BIOME_GRAMMAR";
     public const string GotoName = "aechunk";
     public const string EastGotoName = "aechunk_e";
     public const string WestGotoName = "aechunk_w";
@@ -84,7 +84,7 @@ internal static class ExpeditionChunkPrototype
             return failure;
         }
 
-        var result = $"AE expedition streaming CREATED: seed={worldSeed}, center={_center}, active={Active.Count}/{PoolSize}, coordinates={ActiveCoordinateText()}, vertices={TotalVertices()}, triangles={TotalTriangles()}, colliders={ReadyColliderCount()}/{PoolSize}, maxSeamGap={_maximumSeamGap:0.000000}m, poolSlots={Pool.Count}, assignments={_assignmentCount}, reused={_reusedAssignmentCount}, retired={_retiredCount}, lastTransition={_lastRetainedCount} retained/{_lastAddedCount} added/{_lastRemovedCount} removed, fingerprints={GeometryFingerprints.Count}/{FingerprintCacheLimit}, seamMarkers={SeamLines.Count}, estimatedMesh={EstimatedMeshBytes() / 1024d:0.0} KiB, managedDelta={_managedDelta / 1024d:+0.0;-0.0;0.0} KiB, initialUpdate={_lastUpdateMilliseconds:0.0}ms. Run 'goto {GotoName}', travel across chunk boundaries, and inspect ae_chunk_status.";
+        var result = $"AE expedition streaming CREATED: seed={worldSeed}, center={_center}, active={Active.Count}/{PoolSize}, coordinates={ActiveCoordinateText()}, biomes={ActiveBiomeText()}, transitionChunks={TransitionChunkCount()}/{PoolSize}, vertices={TotalVertices()}, triangles={TotalTriangles()}, colliders={ReadyColliderCount()}/{PoolSize}, maxSeamGap={_maximumSeamGap:0.000000}m, poolSlots={Pool.Count}, assignments={_assignmentCount}, reused={_reusedAssignmentCount}, retired={_retiredCount}, lastTransition={_lastRetainedCount} retained/{_lastAddedCount} added/{_lastRemovedCount} removed, fingerprints={GeometryFingerprints.Count}/{FingerprintCacheLimit}, seamMarkers={SeamLines.Count}, estimatedMesh={EstimatedMeshBytes() / 1024d:0.0} KiB, managedDelta={_managedDelta / 1024d:+0.0;-0.0;0.0} KiB, initialUpdate={_lastUpdateMilliseconds:0.0}ms. Run 'goto {GotoName}', travel across chunk boundaries, and inspect ae_chunk_status.";
         Plugin.Log.LogWarning(result);
         return result;
     }
@@ -97,7 +97,7 @@ internal static class ExpeditionChunkPrototype
 
         var playerCoordinate = Player.main == null ? "unavailable" : CoordinateForPosition(Player.main.transform.position).ToString();
         var state = _faulted ? $"FAULTED({_lastFault})" : "ACTIVE";
-        return $"AE expedition streaming {state}: seed={_worldSeed}, center={_center}, playerChunk={playerCoordinate}, active={Active.Count}/{PoolSize}, coordinates={ActiveCoordinateText()}, vertices={TotalVertices()}, triangles={TotalTriangles()}, colliders={ReadyColliderCount()}/{PoolSize}, maxSeamGap={_maximumSeamGap:0.000000}m, poolSlots={Pool.Count}, assignments={_assignmentCount}, reused={_reusedAssignmentCount}, retired={_retiredCount}, windowUpdates={_windowUpdateCount}, lastTransition={_lastRetainedCount} retained/{_lastAddedCount} added/{_lastRemovedCount} removed, determinismMismatches={_determinismMismatchCount}, fingerprints={GeometryFingerprints.Count}/{FingerprintCacheLimit}, seamMarkers={SeamLines.Count}, estimatedMesh={EstimatedMeshBytes() / 1024d:0.0} KiB, managedDelta={_managedDelta / 1024d:+0.0;-0.0;0.0} KiB, lastUpdate={_lastUpdateMilliseconds:0.0}ms, maxUpdate={_maximumUpdateMilliseconds:0.0}ms.";
+        return $"AE expedition streaming {state}: seed={_worldSeed}, center={_center}, playerChunk={playerCoordinate}, active={Active.Count}/{PoolSize}, coordinates={ActiveCoordinateText()}, biomes={ActiveBiomeText()}, transitionChunks={TransitionChunkCount()}/{PoolSize}, vertices={TotalVertices()}, triangles={TotalTriangles()}, colliders={ReadyColliderCount()}/{PoolSize}, maxSeamGap={_maximumSeamGap:0.000000}m, poolSlots={Pool.Count}, assignments={_assignmentCount}, reused={_reusedAssignmentCount}, retired={_retiredCount}, windowUpdates={_windowUpdateCount}, lastTransition={_lastRetainedCount} retained/{_lastAddedCount} added/{_lastRemovedCount} removed, determinismMismatches={_determinismMismatchCount}, fingerprints={GeometryFingerprints.Count}/{FingerprintCacheLimit}, seamMarkers={SeamLines.Count}, estimatedMesh={EstimatedMeshBytes() / 1024d:0.0} KiB, managedDelta={_managedDelta / 1024d:+0.0;-0.0;0.0} KiB, lastUpdate={_lastUpdateMilliseconds:0.0}ms, maxUpdate={_maximumUpdateMilliseconds:0.0}ms.";
     }
 
     public static string Remove()
@@ -127,7 +127,7 @@ internal static class ExpeditionChunkPrototype
         try
         {
             ApplyWindow(coordinate, initial: false);
-            var result = $"AE expedition streaming WINDOW: center={_center}, active={Active.Count}/{PoolSize}, coordinates={ActiveCoordinateText()}, colliders={ReadyColliderCount()}/{PoolSize}, maxSeamGap={_maximumSeamGap:0.000000}m, assignments={_assignmentCount}, reused={_reusedAssignmentCount}, retired={_retiredCount}, windowUpdates={_windowUpdateCount}, lastTransition={_lastRetainedCount} retained/{_lastAddedCount} added/{_lastRemovedCount} removed, determinismMismatches={_determinismMismatchCount}, update={_lastUpdateMilliseconds:0.0}ms.";
+            var result = $"AE expedition streaming WINDOW: center={_center}, active={Active.Count}/{PoolSize}, coordinates={ActiveCoordinateText()}, biomes={ActiveBiomeText()}, transitionChunks={TransitionChunkCount()}/{PoolSize}, colliders={ReadyColliderCount()}/{PoolSize}, maxSeamGap={_maximumSeamGap:0.000000}m, assignments={_assignmentCount}, reused={_reusedAssignmentCount}, retired={_retiredCount}, windowUpdates={_windowUpdateCount}, lastTransition={_lastRetainedCount} retained/{_lastAddedCount} added/{_lastRemovedCount} removed, determinismMismatches={_determinismMismatchCount}, update={_lastUpdateMilliseconds:0.0}ms.";
             Plugin.Log.LogInfo(result);
         }
         catch (Exception exception)
@@ -262,10 +262,12 @@ internal static class ExpeditionChunkPrototype
                 GeometryFingerprints.Remove(FingerprintOrder.Dequeue());
         }
 
-        ApplyTerrainMaterial(slot.Material, descriptor.Biome, descriptor.Coordinate);
-        slot.Root.name = $"AE Pooled Chunk {descriptor.Coordinate.X},{descriptor.Coordinate.Z} [{descriptor.Biome}]";
+        ApplyTerrainMaterial(slot.Material, descriptor);
+        slot.Root.name = $"AE Pooled Chunk {descriptor.Coordinate.X},{descriptor.Coordinate.Z} [{descriptor.Biome}; {descriptor.TransitionEdges}]";
         slot.Root.transform.localPosition = new Vector3(descriptor.Coordinate.X * Settings.ChunkSize, 0f, descriptor.Coordinate.Z * Settings.ChunkSize);
         slot.Coordinate = descriptor.Coordinate;
+        slot.Biome = descriptor.Biome;
+        slot.TransitionEdges = descriptor.TransitionEdges;
         slot.Assigned = true;
         slot.Root.SetActive(true);
         slot.Collider.enabled = true;
@@ -326,25 +328,40 @@ internal static class ExpeditionChunkPrototype
         }
     }
 
-    private static void ApplyTerrainMaterial(Material material, ExpeditionBiome biome, ExpeditionChunkCoordinate coordinate)
+    private static void ApplyTerrainMaterial(Material material, ExpeditionChunkDescriptor descriptor)
     {
-        var color = biome switch
+        var color = BiomeColor(descriptor.Biome);
+        var glow = BiomeGlow(descriptor.Biome);
+        if (descriptor.IsTransition)
         {
-            ExpeditionBiome.EmberTrench => new Color(0.23f, 0.065f, 0.025f, 1f),
-            ExpeditionBiome.GlassKelpGarden => new Color(0.025f, 0.19f, 0.17f, 1f),
-            _ => new Color(0.04f, 0.095f, 0.24f, 1f)
-        };
-        var glow = biome switch
-        {
-            ExpeditionBiome.EmberTrench => new Color(0.32f, 0.055f, 0.01f, 1f),
-            ExpeditionBiome.GlassKelpGarden => new Color(0.015f, 0.2f, 0.18f, 1f),
-            _ => new Color(0.035f, 0.12f, 0.32f, 1f)
-        };
-        material.name = $"AE Expedition Material {coordinate.X},{coordinate.Z}";
+            var neighborColors = new List<Color>(4);
+            if ((descriptor.TransitionEdges & ExpeditionTransitionEdges.West) != 0) neighborColors.Add(BiomeColor(descriptor.WestBiome));
+            if ((descriptor.TransitionEdges & ExpeditionTransitionEdges.East) != 0) neighborColors.Add(BiomeColor(descriptor.EastBiome));
+            if ((descriptor.TransitionEdges & ExpeditionTransitionEdges.North) != 0) neighborColors.Add(BiomeColor(descriptor.NorthBiome));
+            if ((descriptor.TransitionEdges & ExpeditionTransitionEdges.South) != 0) neighborColors.Add(BiomeColor(descriptor.SouthBiome));
+            var neighbor = neighborColors.Aggregate(Color.black, (sum, item) => sum + item) / neighborColors.Count;
+            color = Color.Lerp(color, neighbor, 0.38f);
+            glow = Color.Lerp(glow, Color.white, 0.22f);
+        }
+        material.name = $"AE Expedition Material {descriptor.Coordinate.X},{descriptor.Coordinate.Z} [{descriptor.Biome}; {descriptor.TransitionEdges}]";
         if (material.HasProperty("_Color")) material.SetColor("_Color", color);
         if (material.HasProperty("_GlowColor")) material.SetColor("_GlowColor", glow);
-        if (material.HasProperty("_GlowStrength")) material.SetFloat("_GlowStrength", 0.35f);
+        if (material.HasProperty("_GlowStrength")) material.SetFloat("_GlowStrength", descriptor.IsTransition ? 0.7f : 0.35f);
     }
+
+    private static Color BiomeColor(ExpeditionBiome biome) => biome switch
+    {
+        ExpeditionBiome.EmberTrench => new Color(0.23f, 0.065f, 0.025f, 1f),
+        ExpeditionBiome.GlassKelpGarden => new Color(0.025f, 0.19f, 0.17f, 1f),
+        _ => new Color(0.04f, 0.095f, 0.24f, 1f)
+    };
+
+    private static Color BiomeGlow(ExpeditionBiome biome) => biome switch
+    {
+        ExpeditionBiome.EmberTrench => new Color(0.32f, 0.055f, 0.01f, 1f),
+        ExpeditionBiome.GlassKelpGarden => new Color(0.015f, 0.2f, 0.18f, 1f),
+        _ => new Color(0.035f, 0.12f, 0.32f, 1f)
+    };
 
     private static void UpdateSeamMarkers(ExpeditionChunkCoordinate center)
     {
@@ -417,6 +434,15 @@ internal static class ExpeditionChunkPrototype
         "/",
         Active.Keys.OrderBy(coordinate => coordinate.Z).ThenBy(coordinate => coordinate.X).Select(coordinate => $"({coordinate.X},{coordinate.Z})"));
 
+    private static string ActiveBiomeText() => string.Join(
+        "/",
+        Active.Values
+            .OrderBy(slot => slot.Coordinate.Z)
+            .ThenBy(slot => slot.Coordinate.X)
+            .Select(slot => $"({slot.Coordinate.X},{slot.Coordinate.Z})={slot.Biome}[{slot.TransitionEdges}]"));
+
+    private static int TransitionChunkCount() => Active.Values.Count(slot => slot.TransitionEdges != ExpeditionTransitionEdges.None);
+
     private static int TotalVertices() => Active.Count * (Subdivisions + 1) * (Subdivisions + 1);
     private static int TotalTriangles() => Active.Count * Subdivisions * Subdivisions * 2;
     private static int ReadyColliderCount() => Active.Values.Count(slot => slot.Collider.sharedMesh != null && slot.Root.activeSelf);
@@ -468,6 +494,8 @@ internal static class ExpeditionChunkPrototype
         public MeshCollider Collider { get; }
         public Material Material { get; }
         public ExpeditionChunkCoordinate Coordinate { get; set; }
+        public ExpeditionBiome Biome { get; set; }
+        public ExpeditionTransitionEdges TransitionEdges { get; set; }
         public bool Assigned { get; set; }
     }
 }

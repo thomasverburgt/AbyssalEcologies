@@ -10,6 +10,16 @@ public enum ExpeditionBiome
     GhostlightNursery
 }
 
+[Flags]
+public enum ExpeditionTransitionEdges
+{
+    None = 0,
+    West = 1,
+    East = 2,
+    North = 4,
+    South = 8
+}
+
 public readonly struct ExpeditionSectorCoordinate : IEquatable<ExpeditionSectorCoordinate>
 {
     public ExpeditionSectorCoordinate(int x, int z) { X = x; Z = z; }
@@ -50,15 +60,37 @@ public sealed class ExpeditionGenerationSettings
 
 public sealed class ExpeditionChunkDescriptor
 {
-    public ExpeditionChunkDescriptor(ExpeditionChunkCoordinate coordinate, ExpeditionSectorCoordinate sector, ExpeditionBiome biome, int terrainSeed, int contentSeed, float northWest, float northEast, float southEast, float southWest)
+    public ExpeditionChunkDescriptor(
+        ExpeditionChunkCoordinate coordinate,
+        ExpeditionSectorCoordinate sector,
+        ExpeditionBiome biome,
+        ExpeditionTransitionEdges transitionEdges,
+        ExpeditionBiome westBiome,
+        ExpeditionBiome eastBiome,
+        ExpeditionBiome northBiome,
+        ExpeditionBiome southBiome,
+        int terrainSeed,
+        int contentSeed,
+        float northWest,
+        float northEast,
+        float southEast,
+        float southWest)
     {
-        Coordinate = coordinate; Sector = sector; Biome = biome; TerrainSeed = terrainSeed; ContentSeed = contentSeed;
+        Coordinate = coordinate; Sector = sector; Biome = biome; TransitionEdges = transitionEdges;
+        WestBiome = westBiome; EastBiome = eastBiome; NorthBiome = northBiome; SouthBiome = southBiome;
+        TerrainSeed = terrainSeed; ContentSeed = contentSeed;
         NorthWestHeight = northWest; NorthEastHeight = northEast; SouthEastHeight = southEast; SouthWestHeight = southWest;
     }
 
     public ExpeditionChunkCoordinate Coordinate { get; }
     public ExpeditionSectorCoordinate Sector { get; }
     public ExpeditionBiome Biome { get; }
+    public ExpeditionTransitionEdges TransitionEdges { get; }
+    public bool IsTransition => TransitionEdges != ExpeditionTransitionEdges.None;
+    public ExpeditionBiome WestBiome { get; }
+    public ExpeditionBiome EastBiome { get; }
+    public ExpeditionBiome NorthBiome { get; }
+    public ExpeditionBiome SouthBiome { get; }
     public int TerrainSeed { get; }
     public int ContentSeed { get; }
     public float NorthWestHeight { get; }
@@ -103,6 +135,8 @@ public sealed class ExpeditionStreamingTransition
 
 public sealed class ExpeditionGenerator
 {
+    private const int BiomeCellSize = 4;
+
     public ExpeditionSectorDescriptor GenerateSector(int worldSeed, ExpeditionSectorCoordinate sector, ExpeditionGenerationSettings? settings = null)
     {
         settings ??= new ExpeditionGenerationSettings();
@@ -164,12 +198,26 @@ public sealed class ExpeditionGenerator
         settings.Validate();
         var terrainSeed = Mix(worldSeed, coordinate.X, coordinate.Z, 0x54A13);
         var contentSeed = Mix(worldSeed, coordinate.X, coordinate.Z, 0xC017E);
-        var biomeRoll = (uint)Mix(worldSeed, coordinate.X, coordinate.Z, 0xB10) % 3u;
+        var biome = BiomeForCoordinate(worldSeed, coordinate);
+        var westBiome = BiomeForCoordinate(worldSeed, new ExpeditionChunkCoordinate(coordinate.X - 1, coordinate.Z));
+        var eastBiome = BiomeForCoordinate(worldSeed, new ExpeditionChunkCoordinate(coordinate.X + 1, coordinate.Z));
+        var northBiome = BiomeForCoordinate(worldSeed, new ExpeditionChunkCoordinate(coordinate.X, coordinate.Z - 1));
+        var southBiome = BiomeForCoordinate(worldSeed, new ExpeditionChunkCoordinate(coordinate.X, coordinate.Z + 1));
+        var transitionEdges = ExpeditionTransitionEdges.None;
+        if (westBiome != biome) transitionEdges |= ExpeditionTransitionEdges.West;
+        if (eastBiome != biome) transitionEdges |= ExpeditionTransitionEdges.East;
+        if (northBiome != biome) transitionEdges |= ExpeditionTransitionEdges.North;
+        if (southBiome != biome) transitionEdges |= ExpeditionTransitionEdges.South;
         var sector = new ExpeditionSectorCoordinate(FloorDivide(coordinate.X, settings.ChunksPerSectorAxis), FloorDivide(coordinate.Z, settings.ChunksPerSectorAxis));
         return new ExpeditionChunkDescriptor(
             coordinate,
             sector,
-            (ExpeditionBiome)biomeRoll,
+            biome,
+            transitionEdges,
+            westBiome,
+            eastBiome,
+            northBiome,
+            southBiome,
             terrainSeed,
             contentSeed,
             SampleVertexHeight(worldSeed, coordinate.X, coordinate.Z, settings),
@@ -177,6 +225,13 @@ public sealed class ExpeditionGenerator
             SampleVertexHeight(worldSeed, coordinate.X + 1, coordinate.Z + 1, settings),
             SampleVertexHeight(worldSeed, coordinate.X, coordinate.Z + 1, settings));
     }
+
+    public ExpeditionBiome BiomeForCoordinate(int worldSeed, ExpeditionChunkCoordinate coordinate) =>
+        (ExpeditionBiome)((uint)Mix(
+            worldSeed,
+            FloorDivide(coordinate.X, BiomeCellSize),
+            FloorDivide(coordinate.Z, BiomeCellSize),
+            0xB10) % 3u);
 
     public float SampleVertexHeight(int worldSeed, int vertexX, int vertexZ, ExpeditionGenerationSettings? settings = null)
     {

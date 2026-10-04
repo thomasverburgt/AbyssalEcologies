@@ -34,6 +34,8 @@ Check("expedition negative coordinates map to stable sectors", ExpeditionNegativ
 Check("expedition streaming windows are bounded and unique", ExpeditionStreamingWindowsAreBoundedAndUnique);
 Check("expedition streaming transitions retain and retire bounded edges", ExpeditionStreamingTransitionsRetainAndRetireBoundedEdges);
 Check("expedition detailed terrain seams share exact heights", ExpeditionDetailedTerrainSeamsShareExactHeights);
+Check("expedition biome grammar is deterministic and distributed", ExpeditionBiomeGrammarIsDeterministicAndDistributed);
+Check("expedition biome transitions agree across shared borders", ExpeditionBiomeTransitionsAgreeAcrossSharedBorders);
 
 if (failures.Count > 0)
 {
@@ -435,8 +437,52 @@ static void ExpeditionDetailedTerrainSeamsShareExactHeights()
     }
 }
 
+static void ExpeditionBiomeGrammarIsDeterministicAndDistributed()
+{
+    var generator = new ExpeditionGenerator();
+    var seen = new HashSet<ExpeditionBiome>();
+    var pure = 0;
+    var transitions = 0;
+    for (var z = -24; z <= 24; z++)
+    for (var x = -24; x <= 24; x++)
+    {
+        var coordinate = new ExpeditionChunkCoordinate(x, z);
+        var first = generator.GenerateChunk(58, coordinate);
+        var second = generator.GenerateChunk(58, coordinate);
+        Require(ExpeditionSignature(first) == ExpeditionSignature(second), $"biome grammar changed at {coordinate}");
+        seen.Add(first.Biome);
+        if (first.IsTransition) transitions++;
+        else pure++;
+    }
+
+    Require(seen.Count == 3, "biome grammar did not distribute all three families");
+    Require(pure > 0 && transitions > 0, "biome grammar did not produce both pure and transition chunks");
+    Require(generator.BiomeForCoordinate(58, new ExpeditionChunkCoordinate(-1, -1)) == generator.BiomeForCoordinate(58, new ExpeditionChunkCoordinate(-4, -4)), "negative coordinates did not remain in their deterministic biome cell");
+}
+
+static void ExpeditionBiomeTransitionsAgreeAcrossSharedBorders()
+{
+    var generator = new ExpeditionGenerator();
+    for (var z = -12; z <= 12; z++)
+    for (var x = -12; x <= 12; x++)
+    {
+        var coordinate = new ExpeditionChunkCoordinate(x, z);
+        var chunk = generator.GenerateChunk(90210, coordinate);
+        var east = generator.GenerateChunk(90210, new ExpeditionChunkCoordinate(x + 1, z));
+        var south = generator.GenerateChunk(90210, new ExpeditionChunkCoordinate(x, z + 1));
+        var eastTransition = (chunk.TransitionEdges & ExpeditionTransitionEdges.East) != 0;
+        var westTransition = (east.TransitionEdges & ExpeditionTransitionEdges.West) != 0;
+        var southTransition = (chunk.TransitionEdges & ExpeditionTransitionEdges.South) != 0;
+        var northTransition = (south.TransitionEdges & ExpeditionTransitionEdges.North) != 0;
+        Require(eastTransition == westTransition, $"east-west transition ownership disagreed at {coordinate}");
+        Require(southTransition == northTransition, $"north-south transition ownership disagreed at {coordinate}");
+        Require(chunk.EastBiome == east.Biome && east.WestBiome == chunk.Biome, $"east-west neighbor family disagreed at {coordinate}");
+        Require(chunk.SouthBiome == south.Biome && south.NorthBiome == chunk.Biome, $"north-south neighbor family disagreed at {coordinate}");
+    }
+}
+
 static string ExpeditionSignature(ExpeditionChunkDescriptor chunk) =>
-    $"{chunk.Coordinate}|{chunk.Sector}|{chunk.Biome}|{chunk.TerrainSeed}|{chunk.ContentSeed}|{chunk.NorthWestHeight:R}|{chunk.NorthEastHeight:R}|{chunk.SouthEastHeight:R}|{chunk.SouthWestHeight:R}";
+    $"{chunk.Coordinate}|{chunk.Sector}|{chunk.Biome}|{chunk.TransitionEdges}|{chunk.WestBiome}|{chunk.EastBiome}|{chunk.NorthBiome}|{chunk.SouthBiome}|{chunk.TerrainSeed}|{chunk.ContentSeed}|{chunk.NorthWestHeight:R}|{chunk.NorthEastHeight:R}|{chunk.SouthEastHeight:R}|{chunk.SouthWestHeight:R}";
 
 static IReadOnlyList<string> Flatten(GeneratedWorld world) => world.Regions
     .SelectMany(region => region.Placements.Select(placement => $"{region.ArchetypeId}|{placement.ContentId}|{placement.Position}|{placement.Scale:0.000}"))
